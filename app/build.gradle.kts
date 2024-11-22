@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.google.android.libraries.mapsplatform.secrets.gradle.plugin)
+    id("com.google.secrets_gradle_plugin") version "0.4"
 }
 
 android {
@@ -50,10 +50,8 @@ android {
         }
     }
     secrets {
-        // To add your Maps API key to this project:
-        // 1. If the secrets.properties file does not exist, create it in the same folder as the local.properties file.
-        // 2. Add this line, where YOUR_API_KEY is your API key:
-        //        MAPS_API_KEY=YOUR_API_KEY
+        // Optionally specify a different file name containing your secrets.
+        // The plugin defaults to "local.properties"
         propertiesFileName = "secrets.properties"
 
         // A properties file containing default secret values. This file can be
@@ -65,11 +63,15 @@ android {
         ignoreList.add("keyToIgnore") // Ignore the key "keyToIgnore"
         ignoreList.add("sdk.*")       // Ignore all keys matching the regexp "sdk.*"
     }
-
 }
 
 dependencies {
-    implementation("com.google.android.gms:play-services-maps:19.0.0")
+    // navigation
+    implementation ("androidx.navigation:navigation-compose:2.4.2")
+
+    // map
+    implementation("com.google.maps.android:maps-compose:4.3.3")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -78,9 +80,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation(libs.play.services.maps)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.navigation.runtime.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
