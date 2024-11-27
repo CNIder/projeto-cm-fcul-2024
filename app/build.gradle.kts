@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("com.google.secrets_gradle_plugin") version "0.4"
+    alias(libs.plugins.google.gms.google.services)
 }
 
 android {
@@ -66,10 +67,10 @@ android {
 }
 
 dependencies {
-    // navigation
+    // Jetpack Navigation
     implementation ("androidx.navigation:navigation-compose:2.4.2")
 
-    // map
+    // Google Maps API
     implementation("com.google.maps.android:maps-compose:4.3.3")
 
     implementation(libs.androidx.core.ktx)
@@ -81,6 +82,8 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.runtime.ktx)
+    implementation(libs.androidx.runtime.livedata)
+    implementation(libs.firebase.database)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

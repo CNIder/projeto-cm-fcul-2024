@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "476860333799",
+    "firebase_url": "https://projeto-cm-walking-dead-default-rtdb.firebaseio.com",
+    "project_id": "projeto-cm-walking-dead",
+    "storage_bucket": "projeto-cm-walking-dead.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:476860333799:android:8f3ec9454ece12fe23ac42",
+        "android_client_info": {
+          "package_name": "com.example.projeto_cm_24_25"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB2hg6ON9tN5PhdIll1VGs4v4WUAgSPAJ4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
