@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemColors
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,11 +17,13 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.projeto_cm_24_25.data.MapViewModel
 import com.example.projeto_cm_24_25.data.BlogViewModel
 import com.example.projeto_cm_24_25.navigation.NavigationItem
+import com.example.projeto_cm_24_25.ui.theme.primaryColor
 
 @Composable
 fun HomeScreen(navController: NavHostController) {
@@ -38,7 +41,9 @@ fun HomeScreen(navController: NavHostController) {
         modifier = Modifier.fillMaxSize(),
         // bottom bar
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                containerColor = primaryColor
+            ){
                 navItemList.forEachIndexed {index, navItem ->
                     NavigationBarItem(
                         selected = selectedTabIndex == index,
@@ -48,7 +53,7 @@ fun HomeScreen(navController: NavHostController) {
                         },
                         label = {
                             Text(navItem.label)
-                        }
+                        },
                     )
                 }
             }
@@ -63,7 +68,7 @@ fun ContentScreen(modifier: Modifier = Modifier, selectedIndex: Int, navControll
     val blogViewModel : BlogViewModel = viewModel()
     val mapViewModel : MapViewModel = viewModel()
     when(selectedIndex) {
-        0 -> MapScreen(modifier, mapViewModel)
+        0 -> MapScreen(modifier, mapViewModel, navController)
         1 -> BlogScreen(modifier, blogViewModel, navController)
     }
 }
