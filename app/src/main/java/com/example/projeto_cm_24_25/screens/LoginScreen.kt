@@ -35,7 +35,7 @@ fun LoginScreen(navController: NavHostController, viewModel: UserViewModel) {
     // state to hold the text of textfield
     val nameState = remember { mutableStateOf(TextFieldValue("")) }
     Column(
-        modifier = Modifier.fillMaxSize().background(Color.Black),
+        modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ){
