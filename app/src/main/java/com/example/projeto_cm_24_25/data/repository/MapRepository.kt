@@ -30,7 +30,7 @@ class MapRepository {
     }
 
     fun addBlogData(marker: ItemMarker) {
-        itemsRef.child("exemplo2").setValue(marker).addOnSuccessListener {
+        itemsRef.child(marker.name).setValue(marker).addOnSuccessListener {
             Log.d("FIREBASE", "Created")
         }.addOnFailureListener { error ->
             Log.d("FIREBASE", "Error $error")

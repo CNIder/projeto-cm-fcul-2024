@@ -6,22 +6,17 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Looper
 import android.util.Log
-import android.widget.Button
-import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,10 +24,14 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.core.app.ActivityCompat
+import androidx.navigation.NavHostController
+import com.example.projeto_cm_24_25.R
 import com.example.projeto_cm_24_25.data.MapViewModel
-import com.example.projeto_cm_24_25.data.model.ItemMarker
+import com.example.projeto_cm_24_25.navigation.Screen
 import com.example.projeto_cm_24_25.ui.theme.primaryColor
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
@@ -45,6 +44,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerComposable
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberMarkerState
@@ -77,7 +77,11 @@ private fun startLocationUpdates() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MapScreen(modifier: Modifier = Modifier, mapViewModel: MapViewModel) {
+fun MapScreen(
+    modifier: Modifier = Modifier,
+    mapViewModel: MapViewModel,
+    navController: NavHostController
+) {
     val markerList = mapViewModel.markerData.observeAsState(emptyList())
     val location = LocalContext.current
     var currentLocation = rememberMarkerState(position = LatLng(0.0,0.0))
@@ -86,7 +90,7 @@ fun MapScreen(modifier: Modifier = Modifier, mapViewModel: MapViewModel) {
         override fun onLocationResult(p0: LocationResult) {
             super.onLocationResult(p0)
             for (location in p0.locations) {
-                Log.d("ACT", location.toString())
+                // Log.d("ACT", location.toString())
             }
         }
     }
@@ -108,9 +112,8 @@ fun MapScreen(modifier: Modifier = Modifier, mapViewModel: MapViewModel) {
         .addOnSuccessListener { location: Location? ->
             if (location != null) {
                 currentLocation.position = LatLng(location.latitude, location.longitude)
-                cameraPositionState.position = CameraPosition.fromLatLngZoom(currentLocation.position, 14f)
+                cameraPositionState.position = CameraPosition.fromLatLngZoom(currentLocation.position, 10f)
             }
-            Log.d("Teste", "Location:" + location.toString())
             startLocationUpdates()
         }
     /*val properties by remember {
@@ -135,9 +138,16 @@ fun MapScreen(modifier: Modifier = Modifier, mapViewModel: MapViewModel) {
         )
         Button(
             modifier = Modifier.fillMaxWidth(),
-            onClick = {}
+            onClick = {
+                // navigate to map form screen
+                navController.navigate(Screen.MapForm.route)
+            },
+            shape = RectangleShape,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Red
+            )
         ) {
-            Text("Criar Ponto")
+            Text("Report place")
         }
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
@@ -157,9 +167,19 @@ fun MapScreen(modifier: Modifier = Modifier, mapViewModel: MapViewModel) {
                     it.longitude
                 )
                 println("Distance is $distance")
-                Marker(
+                var icon = 0
+                when(it.type) {
+                    "Safe Zone" -> { icon = R.drawable.safe_zone_icon }
+                    "Infected Zone" -> {icon = R.drawable.infected_zone_icon}
+                }
+                MarkerComposable(
                     state = MarkerState(position = LatLng(it.latitude, it.longitude))
-                )
+                ){
+                    Image(
+                        painter = painterResource(icon),
+                        contentDescription = "image on marker"
+                    )
+                }
             }
         }
     }
