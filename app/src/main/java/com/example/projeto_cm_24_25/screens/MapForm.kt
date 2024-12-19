@@ -71,7 +71,7 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel,) {
 
     // remember the camera position state
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(initialPosition, 6f)
+        position = CameraPosition.fromLatLngZoom(initialPosition, 2f)
     }
     var uiSettings by remember {
         mutableStateOf(MapUiSettings(zoomControlsEnabled = true))
@@ -105,7 +105,7 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel,) {
         TextField(
             value = textInput,
             onValueChange = { newValue -> textInput = newValue},
-            label = { Text("Type your name") },
+            label = { Text("Type the zone name") },
             modifier = Modifier.fillMaxWidth(),
             colors = TextFieldDefaults.colors(
                 focusedTextColor = Color.Black,
@@ -123,7 +123,7 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel,) {
                         //This value is used to assign to the DropDown the same width
                         textfieldSize = coordinates.size.toSize()
                     },
-                label = {Text("Label")},
+                label = {Text("Type of Zone ?")},
                 trailingIcon = {
                     Icon(icon,"contentDescription",
                         Modifier.clickable { expanded = !expanded })

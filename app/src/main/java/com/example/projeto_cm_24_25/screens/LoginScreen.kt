@@ -2,6 +2,7 @@ package com.example.projeto_cm_24_25.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
@@ -29,6 +32,7 @@ import androidx.compose.ui.input.pointer.motionEventSpy
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,42 +48,116 @@ import com.example.projeto_cm_24_25.navigation.Screen
 fun LoginScreen(navController: NavHostController, viewModel: UserViewModel) {
     val name by viewModel.userName.observeAsState(initial = "")
     Box(
-        modifier = Modifier.fillMaxSize()
-    )
-    {
-        // background image
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        // Background image
         Image(
-            painter = painterResource(R.drawable.login_background),
+            painter = painterResource(R.drawable.login_2),
             contentDescription = "background image",
-            contentScale = ContentScale.FillBounds,
-            modifier = Modifier.fillMaxSize().align(Alignment.Center)
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
         )
+
         Column(
-            modifier = Modifier.fillMaxSize().padding(44.dp),
-            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(30.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            // textfield for user name input
-            TextField(
-                value = name,
-                onValueChange = { newValue -> viewModel.onNameUpdate(newValue) },
-                label = { Text("Type your name") },
-                modifier = Modifier.fillMaxWidth(),
-                colors = TextFieldDefaults.colors(
-                    focusedTextColor = Color.Black,
-                    focusedPlaceholderColor = Color.Black,
+
+            Text(
+                modifier = Modifier
+                    .padding(top = 30.dp),
+                text = "SURVIVOR APP",
+                color = Color.White,
+                style = TextStyle(
+                    fontSize = 30.sp,
+                    fontWeight = FontWeight.Bold
                 )
             )
-            Spacer(Modifier.height(10.dp))
-            Button(
-                onClick = { navController.navigate(Screen.Home.route) },
-                shape = RectangleShape,
-                modifier = Modifier.fillMaxWidth().fillMaxHeight(0.07f),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Red
+            Spacer(modifier = Modifier.height(5.dp))
+            Text(
+                modifier = Modifier,
+                text = "Stay Alive. Stay Ahead",
+                color = Color.Red,
+                style = TextStyle(
+                    fontSize = 13.sp,
                 )
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(225.dp)
+                    .background(Color.Black.copy(alpha = 0.9f), shape = RoundedCornerShape(16.dp))
+                    .padding(15.dp)
             ) {
-                Text(text = "Register")
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text(
+                        modifier = Modifier.padding(bottom = 8.dp),
+                        text = "USERNAME",
+                        color = Color.White
+                    )
+                    TextField(
+                        value = name,
+                        onValueChange = { newValue -> viewModel.onNameUpdate(newValue) },
+                        label = {
+                            Text(
+                                "Insert here",
+                                style = TextStyle(
+                                    fontSize = 14.sp,
+                                    color = Color.White
+                                )
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(0.5.dp, Color.White, RoundedCornerShape(8.dp)),
+                        colors = TextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            focusedLabelColor = Color.White,
+                            unfocusedLabelColor = Color.White,
+                            focusedPlaceholderColor = Color.White,
+                            focusedContainerColor = Color.Black,
+                            unfocusedContainerColor = Color.Black,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent
+                        )
+
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    Button(
+                        onClick = { navController.navigate(Screen.Home.route) },
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(238, 31, 39),
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Text("Register",
+                            style = TextStyle( fontWeight = FontWeight.Bold))
+                    }
+                }
             }
+
+            Spacer(modifier = Modifier.height(30.dp))
+
+            Image(
+                painter = painterResource(R.drawable.bio_hazzard),
+                contentDescription = "Biohazard",
+                modifier = Modifier
+                    .size(100.dp)
+            )
         }
     }
 }
