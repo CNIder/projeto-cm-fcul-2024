@@ -1,5 +1,6 @@
 package com.example.projeto_cm_24_25.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,16 +21,19 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.motionEventSpy
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -41,17 +45,28 @@ import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.example.projeto_cm_24_25.R
 import com.example.projeto_cm_24_25.data.UserViewModel
+import com.example.projeto_cm_24_25.data.repository.DataStoreRepository
 import com.example.projeto_cm_24_25.navigation.Screen
+import kotlinx.coroutines.launch
 
 
 @Composable
 fun LoginScreen(navController: NavHostController, viewModel: UserViewModel) {
     val name by viewModel.userName.observeAsState(initial = "")
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val dataStore = DataStoreRepository(context)
+    val userName = dataStore.getUserName.collectAsState(initial = "")
+
+    // Se o utilizador estiver registado ir para Home Screen
+    if(userName.value!!.isNotEmpty()) {
+        navController.navigate(Screen.Home.route)
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
     ) {
-        // Background image
         Image(
             painter = painterResource(R.drawable.login_2),
             contentDescription = "background image",
@@ -66,7 +81,6 @@ fun LoginScreen(navController: NavHostController, viewModel: UserViewModel) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-
             Text(
                 modifier = Modifier
                     .padding(top = 30.dp),
@@ -83,12 +97,10 @@ fun LoginScreen(navController: NavHostController, viewModel: UserViewModel) {
                 text = "Stay Alive. Stay Ahead",
                 color = Color.Red,
                 style = TextStyle(
-                    fontSize = 13.sp,
+                    fontSize = 18.sp,
                 )
             )
             Spacer(modifier = Modifier.height(20.dp))
-
-
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -102,7 +114,7 @@ fun LoginScreen(navController: NavHostController, viewModel: UserViewModel) {
                 ) {
                     Text(
                         modifier = Modifier.padding(bottom = 8.dp),
-                        text = "USERNAME",
+                        text = "Username",
                         color = Color.White
                     )
                     TextField(
@@ -110,7 +122,7 @@ fun LoginScreen(navController: NavHostController, viewModel: UserViewModel) {
                         onValueChange = { newValue -> viewModel.onNameUpdate(newValue) },
                         label = {
                             Text(
-                                "Insert here",
+                                "Type your name",
                                 style = TextStyle(
                                     fontSize = 14.sp,
                                     color = Color.White
@@ -134,7 +146,18 @@ fun LoginScreen(navController: NavHostController, viewModel: UserViewModel) {
                     )
                     Spacer(Modifier.height(10.dp))
                     Button(
-                        onClick = { navController.navigate(Screen.Home.route) },
+                        onClick = {
+                            // Validar se o campo nao esta vazio
+                            if(name.isEmpty()) {
+                                Toast.makeText(context, "Enter your name!", Toast.LENGTH_LONG).show()
+                                return@Button
+                            }
+                            // Guardar o nome no DataStore
+                            scope.launch {
+                                dataStore.saveUserName(name)
+                            }
+                            navController.navigate(Screen.Home.route)
+                        },
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier
                             .fillMaxWidth()

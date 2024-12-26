@@ -20,6 +20,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +35,7 @@ import androidx.core.app.ActivityCompat
 import androidx.navigation.NavHostController
 import com.example.projeto_cm_24_25.R
 import com.example.projeto_cm_24_25.data.MapViewModel
+import com.example.projeto_cm_24_25.data.repository.DataStoreRepository
 import com.example.projeto_cm_24_25.navigation.Screen
 import com.example.projeto_cm_24_25.ui.theme.primaryColor
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -314,6 +316,9 @@ fun MapScreen(
         """.trimIndent())))
     }
 
+    val dataStore = DataStoreRepository(location)
+    val userName = dataStore.getUserName.collectAsState(initial = "").value
+
     Column(
         modifier = modifier
             .fillMaxSize(),
@@ -323,7 +328,7 @@ fun MapScreen(
         TopAppBar(
             title = {
                 Text(
-                    text = "Hello !",
+                    text = "Hello survivor $userName !",
                     color = Color.White
                 )
                     },
@@ -334,7 +339,7 @@ fun MapScreen(
         Button(
             modifier = Modifier.fillMaxWidth(),
             onClick = {
-                // navigate to map form screen
+                // Navegar para o ecra do formulario do mapa
                 navController.navigate(Screen.MapForm.route)
             },
             shape = RectangleShape,

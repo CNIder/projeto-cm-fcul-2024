@@ -72,6 +72,8 @@ dependencies {
     // Google Maps API
     implementation("com.google.maps.android:maps-compose:4.3.3")
 
+    // Datastore
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
