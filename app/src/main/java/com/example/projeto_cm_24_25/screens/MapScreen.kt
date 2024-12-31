@@ -8,13 +8,20 @@ import android.os.Looper
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -31,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.navigation.NavHostController
 import com.example.projeto_cm_24_25.R
@@ -38,6 +46,10 @@ import com.example.projeto_cm_24_25.data.MapViewModel
 import com.example.projeto_cm_24_25.data.repository.DataStoreRepository
 import com.example.projeto_cm_24_25.navigation.Screen
 import com.example.projeto_cm_24_25.ui.theme.primaryColor
+import com.example.projeto_cm_24_25.utils.NotificationService
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -47,6 +59,8 @@ import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
+import com.google.android.gms.tasks.CancellationToken
+import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
@@ -83,7 +97,7 @@ private fun startLocationUpdates() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun MapScreen(
     modifier: Modifier = Modifier,
@@ -94,7 +108,51 @@ fun MapScreen(
     val location = LocalContext.current
     var currentLocation = rememberMarkerState(position = LatLng(0.0,0.0))
     val cameraPositionState = rememberCameraPositionState {}
-    locationCallback = object : LocationCallback() {
+    val notificationService = NotificationService(location)
+
+    val locationPermissionState = rememberMultiplePermissionsState(
+        listOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.POST_NOTIFICATIONS
+        )
+    )
+
+    LaunchedEffect(true) {
+        // Permissao para aceder a localizacao atual
+        locationPermissionState.launchMultiplePermissionRequest()
+        mapViewModel.getMarkers()
+    }
+
+    fusedLocationClient = LocationServices.getFusedLocationProviderClient(location)
+
+    locationPermissionState.permissions.forEach { permissionState ->
+        if (permissionState.status.isGranted) {
+            if (ActivityCompat.checkSelfPermission(
+                    location,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                    location,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                return
+            }
+            fusedLocationClient.getCurrentLocation(
+                Priority.PRIORITY_HIGH_ACCURACY,
+                CancellationTokenSource().token
+            ).addOnSuccessListener { location ->
+                location?.let {
+                    Log.d("ACT", location.toString())
+                    currentLocation.position = LatLng(location.latitude, location.longitude)
+                    // Zoom para localizacao atual
+                    cameraPositionState.position = CameraPosition.fromLatLngZoom(currentLocation.position, 10f)
+                }
+            }.addOnFailureListener {}
+        }
+    }
+
+    /*locationCallback = object : LocationCallback() {
         override fun onLocationResult(p0: LocationResult) {
             super.onLocationResult(p0)
             for (location in p0.locations) {
@@ -123,7 +181,7 @@ fun MapScreen(
                 cameraPositionState.position = CameraPosition.fromLatLngZoom(currentLocation.position, 10f)
             }
             startLocationUpdates()
-        }
+        }*/
 
     val properties by remember {
         mutableStateOf(MapProperties(mapStyleOptions = MapStyleOptions("""
@@ -336,58 +394,66 @@ fun MapScreen(
                 containerColor = primaryColor
             ),
         )
-        Button(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = {
-                // Navegar para o ecra do formulario do mapa
-                navController.navigate(Screen.MapForm.route)
-            },
-            shape = RectangleShape,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Red
-            )
-        ) {
-            Text("Report place")
-        }
-        GoogleMap(
-            modifier = Modifier.fillMaxSize(),
-            cameraPositionState = cameraPositionState,
-            uiSettings = MapUiSettings(zoomControlsEnabled = true),
-            properties = properties
-        ) {
-            Circle(
-                center = currentLocation.position,
-                radius = 1000.0,
-                strokeColor = Color.Red,
-                fillColor = Color(0x220000FF),
-                strokeWidth = 2f
-            )
-            // marker for current user position
-            Marker(
-                state = currentLocation
-            )
-            // markers for other locations
-            markerList.value.forEach {
-                val distance : Double = haversineDistance(
-                    currentLocation.position.latitude,
-                    currentLocation.position.longitude,
-                    it.latitude,
-                    it.longitude
+        Box{
+            GoogleMap(
+                modifier = Modifier.fillMaxSize(),
+                cameraPositionState = cameraPositionState,
+                uiSettings = MapUiSettings(zoomControlsEnabled = true),
+                properties = properties
+            ) {
+                Circle(
+                    center = currentLocation.position,
+                    radius = 1000.0,
+                    strokeColor = Color.Red,
+                    fillColor = Color(0x220000FF),
+                    strokeWidth = 2f
                 )
-                println("Distance is $distance")
-                var icon = 0
-                when(it.type) {
-                    "Safe Zone" -> { icon = R.drawable.safe_zone_icon }
-                    "Infected Zone" -> {icon = R.drawable.infected_zone_icon}
-                }
-                MarkerComposable(
-                    state = MarkerState(position = LatLng(it.latitude, it.longitude))
-                ){
-                    Image(
-                        painter = painterResource(icon),
-                        contentDescription = "image on marker"
+                // Marker para posicao atual
+                Marker(
+                    state = currentLocation
+                )
+                // Markers para pontos de interesse
+                markerList.value.forEach {
+                    val distance : Double = haversineDistance(
+                        currentLocation.position.latitude,
+                        currentLocation.position.longitude,
+                        it.latitude,
+                        it.longitude
                     )
+                    println("Distance is $distance")
+
+                    // Alerta utilizador para proximidade de zona perigosa
+                    if (distance < 50 && it.type == "Infected Zone") {
+                        notificationService.showNotification()
+                    }
+
+                    var icon = 0
+                    when(it.type) {
+                        "Safe Zone" -> { icon = R.drawable.safe_zone_icon }
+                        "Infected Zone" -> {icon = R.drawable.infected_zone_icon}
+                    }
+                    MarkerComposable(
+                        state = MarkerState(position = LatLng(it.latitude, it.longitude))
+                    ){
+                        Image(
+                            painter = painterResource(icon),
+                            contentDescription = "image on marker"
+                        )
+                    }
                 }
+            }
+
+            ExtendedFloatingActionButton(
+                onClick = {
+                    // Navegar para o ecra do formulario do mapa
+                    navController.navigate(Screen.MapForm.route)
+                },
+                containerColor = primaryColor,
+                contentColor = Color.White,
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp),
+            ) {
+                Text(text = "Report place")
+                Icon(Icons.Filled.Add, "Floating button")
             }
         }
     }

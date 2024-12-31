@@ -1,6 +1,7 @@
 package com.example.projeto_cm_24_25.screens
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,6 +36,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.toSize
@@ -45,6 +47,7 @@ import com.example.projeto_cm_24_25.navigation.Screen
 import com.example.projeto_cm_24_25.ui.theme.primaryColor
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.DragState
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
@@ -53,11 +56,13 @@ import com.google.maps.android.compose.rememberMarkerState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MapForm(navController: NavHostController, mapViewModel: MapViewModel,) {
-    // list that contains types of places
+fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
+    val context = LocalContext.current
+
+    // List dos tipos de lugares
     val placeTypes = listOf("Safe Zone", "Hiding Zone", "Supply Zone", "Infected Zone")
 
-    // variables for drop down
+    // Variaveis para Drop Down
     var expanded by remember { mutableStateOf(false) }
     var selectedText by remember { mutableStateOf("") }
     var textfieldSize by remember { mutableStateOf(Size.Zero)}
@@ -66,18 +71,17 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel,) {
     else
         Icons.Filled.ArrowDropDown
 
-    // initial position of marker
+    // Posicao inicial do marker
     val initialPosition = LatLng(38.7223, -9.1393)
 
-    // remember the camera position state
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(initialPosition, 2f)
+        position = CameraPosition.fromLatLngZoom(initialPosition, 10f)
     }
     var uiSettings by remember {
         mutableStateOf(MapUiSettings(zoomControlsEnabled = true))
     }
-    // state for the draggable marker position
-    var markerPosition by remember { mutableStateOf(initialPosition) }
+    // Posicao do marker para o utilizador indicar no mapa
+    var markerPosition by remember { mutableStateOf<LatLng?>(null) }
 
     var textInput by remember { mutableStateOf("") }
 
@@ -147,34 +151,49 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel,) {
             }
         }
 
-        // google maps for location choosing
+        // Google Maps
+        val markerState = rememberMarkerState()
         GoogleMap(
             modifier = Modifier.fillMaxHeight(0.75f),
             cameraPositionState = cameraPositionState,
-            uiSettings = uiSettings
+            uiSettings = uiSettings,
+            onMapClick = {
+                markerState.position = LatLng(it.latitude, it.longitude)
+                markerPosition = markerState.position
+            }
         ){
-            Marker(
-                state = rememberMarkerState(position = markerPosition),
-                title = "Drag me",
-                draggable = true,
-                onClick = {
-                    markerPosition = it.position
-                    Log.d("MAP FORM", it.position.toString())
-                    false
-                }
-            )
+            markerState?.let {
+                Marker(
+                    state = it,
+                )
+            }
         }
 
-        // submit button
+
+        // Botao para submeter formulario
         Button(
             modifier = Modifier.fillMaxWidth(),
             onClick = {
-                // get field data
-                Log.d("MAP FORM", textInput)
-                Log.d("MAP FORM", selectedText)
-                Log.d("MAP FORM", markerPosition.toString())
-                val itemMarker = ItemMarker(textInput, selectedText, markerPosition.latitude, markerPosition.longitude)
-                mapViewModel.addMarker(itemMarker)
+                // Validar campos
+                if(textInput.isEmpty()) {
+                    Toast.makeText(context, "Please provide a location name", Toast.LENGTH_SHORT).show()
+                    return@Button
+                } else if (selectedText.isEmpty()) {
+                    Toast.makeText(context, "Please provide the location type", Toast.LENGTH_SHORT).show()
+                    return@Button
+                } else if (markerPosition == null) {
+                    Toast.makeText(context, "Click on the map to choose location", Toast.LENGTH_SHORT).show()
+                    return@Button
+                }
+
+                val itemMarker = ItemMarker(
+                    textInput,
+                    selectedText,
+                    markerPosition!!.latitude,
+                    markerPosition!!.longitude
+                )
+                //mapViewModel.addMarker(itemMarker)
+                Toast.makeText(context, "Adicionado com Sucesso !\uD83E\uDD17", Toast.LENGTH_LONG).show()
                 navController.popBackStack()
             },
             shape = RectangleShape,

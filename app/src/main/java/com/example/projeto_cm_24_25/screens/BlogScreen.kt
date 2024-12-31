@@ -14,14 +14,20 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -29,8 +35,11 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.projeto_cm_24_25.data.BlogViewModel
 import com.example.projeto_cm_24_25.data.model.Blog
+import com.example.projeto_cm_24_25.data.repository.DataStoreRepository
 import com.example.projeto_cm_24_25.navigation.Screen
+import com.example.projeto_cm_24_25.ui.theme.primaryColor
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BlogScreen(
     modifier: Modifier = Modifier,
@@ -38,12 +47,29 @@ fun BlogScreen(
     navController: NavHostController
 ) {
     val blogData = viewModel.blogData.observeAsState(emptyList())
+
+    val context = LocalContext.current
+    val dataStore = DataStoreRepository(context)
+    val userName = dataStore.getUserName.collectAsState(initial = "").value
+
     LaunchedEffect(true) {
         viewModel.getBlogData()
     }
+
     Column(
         modifier = modifier
     ){
+        TopAppBar(
+            title = {
+                Text(
+                    text = "Hello survivor $userName !",
+                    color = Color.White
+                )
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = primaryColor
+            ),
+        )
         Button(
             modifier = Modifier.fillMaxWidth(),
             shape = RectangleShape,
@@ -59,6 +85,7 @@ fun BlogScreen(
             )
         }
 
+        // Lista dos blogs publicados
         LazyColumn(
             modifier = Modifier.fillMaxSize()
                 .background(Color.Black)

@@ -1,5 +1,6 @@
 package com.example.projeto_cm_24_25.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -10,21 +11,29 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projeto_cm_24_25.data.BlogViewModel
 import com.example.projeto_cm_24_25.data.model.Blog
+import com.example.projeto_cm_24_25.data.repository.DataStoreRepository
 
 @Composable
 fun BlogFormScreen(viewModel: BlogViewModel) {
-    // remember the state of blog title
+    val context = LocalContext.current
+    // Titulo do blog
     val titleTextState = remember { mutableStateOf("") }
-    // remember the state of blog content
+    // Conteudo do blog
     val contentTextState = remember { mutableStateOf("") }
+
+    val dataStore = DataStoreRepository(context)
+    // Recebe o nome de utilizador
+    val userName = dataStore.getUserName.collectAsState(initial = "")
 
     Column(
         verticalArrangement = Arrangement.SpaceEvenly,
@@ -46,13 +55,20 @@ fun BlogFormScreen(viewModel: BlogViewModel) {
         Button(
             modifier = Modifier.fillMaxWidth(),
             onClick = {
-                // create blog object
+                // Validar campos
+                if(titleTextState.value.isEmpty()) {
+                    Toast.makeText(context, "Please provide the blog name", Toast.LENGTH_SHORT).show()
+                    return@Button
+                } else if(contentTextState.value.isEmpty()) {
+                    Toast.makeText(context, "Please write something", Toast.LENGTH_SHORT).show()
+                    return@Button
+                }
+                // Criar um objeto kotlin blog
                 val blog = Blog(
                     title = titleTextState.value,
                     content = contentTextState.value,
-                    author = "claudio"
+                    author = userName.value.toString()
                 )
-                // add blog data to firebase
                 viewModel.addBlogData(blog)
             }
         ) {
