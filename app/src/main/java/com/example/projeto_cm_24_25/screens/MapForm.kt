@@ -2,12 +2,14 @@ package com.example.projeto_cm_24_25.screens
 
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -38,7 +40,10 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
 import androidx.navigation.NavHostController
 import com.example.projeto_cm_24_25.data.MapViewModel
@@ -60,7 +65,7 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
     val context = LocalContext.current
 
     // List dos tipos de lugares
-    val placeTypes = listOf("Safe Zone", "Hiding Zone", "Supply Zone", "Infected Zone")
+    val placeTypes = listOf("Safe Zone", "Supply Zone", "Infected Zone")
 
     // Variaveis para Drop Down
     var expanded by remember { mutableStateOf(false) }
@@ -95,7 +100,7 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
             ),
             navigationIcon = {
                 IconButton(onClick = {
-                    // navigate to map screen
+                    // Voltar para o ecra principal
                     navController.popBackStack()
                 }) {
                     Icon(
@@ -105,29 +110,46 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
                 }
             }
         )
-        // place report form
+
         TextField(
             value = textInput,
             onValueChange = { newValue -> textInput = newValue},
-            label = { Text("Type the zone name") },
-            modifier = Modifier.fillMaxWidth(),
+            label = {
+                Text(
+                    "Zone name",
+                    style = TextStyle(
+                        fontSize = 14.sp,
+                        color = Color.White
+                    )
+                )
+            },
+            placeholder = {
+                Text("e.g, FCUL \uD83C\uDFEB safe place")
+            },
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
             colors = TextFieldDefaults.colors(
-                focusedTextColor = Color.Black,
-                focusedPlaceholderColor = Color.Black,
+                focusedTextColor = Color.White,
+                focusedLabelColor = Color.White,
+                unfocusedLabelColor = Color.White,
+                focusedPlaceholderColor = Color.White,
+                focusedContainerColor = Color.Black,
+                unfocusedContainerColor = Color.Black,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
             )
         )
-        // drop down box
+
         Box {
             OutlinedTextField(
                 value = selectedText,
                 onValueChange = { selectedText = it },
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(14.dp)
                     .onGloballyPositioned { coordinates ->
-                        //This value is used to assign to the DropDown the same width
                         textfieldSize = coordinates.size.toSize()
                     },
-                label = {Text("Type of Zone ?")},
+                label = {Text("Zone type")},
                 trailingIcon = {
                     Icon(icon,"contentDescription",
                         Modifier.clickable { expanded = !expanded })
@@ -151,10 +173,10 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
             }
         }
 
-        // Google Maps
+        // Mapa
         val markerState = rememberMarkerState()
         GoogleMap(
-            modifier = Modifier.fillMaxHeight(0.75f),
+            modifier = Modifier.fillMaxHeight(0.75f).padding(14.dp).border(width = 2.dp, color = Color.Red),
             cameraPositionState = cameraPositionState,
             uiSettings = uiSettings,
             onMapClick = {

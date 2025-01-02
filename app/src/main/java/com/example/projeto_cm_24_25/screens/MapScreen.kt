@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Looper
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,6 +17,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -26,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -42,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.navigation.NavHostController
 import com.example.projeto_cm_24_25.R
+import com.example.projeto_cm_24_25.data.AccerelometerViewModel
 import com.example.projeto_cm_24_25.data.MapViewModel
 import com.example.projeto_cm_24_25.data.repository.DataStoreRepository
 import com.example.projeto_cm_24_25.navigation.Screen
@@ -97,6 +102,7 @@ private fun startLocationUpdates() {
     }
 }
 
+@SuppressLint("RememberReturnType")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun MapScreen(
@@ -117,11 +123,20 @@ fun MapScreen(
             Manifest.permission.POST_NOTIFICATIONS
         )
     )
+    val sensorViewModel = remember { AccerelometerViewModel(location) }
+    val showDialog = remember { mutableStateOf(false) }
 
     LaunchedEffect(true) {
         // Permissao para aceder a localizacao atual
         locationPermissionState.launchMultiplePermissionRequest()
         mapViewModel.getMarkers()
+    }
+
+    DisposableEffect(Unit){
+        sensorViewModel.startListening()
+        onDispose {
+            sensorViewModel.stopListening()
+        }
     }
 
     fusedLocationClient = LocationServices.getFusedLocationProviderClient(location)
@@ -383,10 +398,41 @@ fun MapScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ){
+        if(sensorViewModel.acceleration.value > 6f) {
+            showDialog.value = true
+        }
+
+        // Se o valor x do accerolometro for elevado,
+        // foi detetado movimento brusco com o telemovel
+        if(showDialog.value) {
+            AlertDialog(
+                onDismissRequest = {showDialog.value = false},
+                title = { Text("\uD83D\uDEA8 Alert \uD83D\uDEA8") },
+                text = { Text("Were you in danger ?") },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showDialog.value = false
+                            Toast.makeText(location, "Go to a safe location", Toast.LENGTH_LONG).show()
+                        }
+                    ) {
+                        Text("Yes")
+                    }
+                },
+                dismissButton = {
+                    Button(
+                        onClick = {showDialog.value = false}
+                    ) {
+                        Text("No")
+                    }
+                }
+            )
+        }
+
         TopAppBar(
             title = {
                 Text(
-                    text = "Hello survivor $userName !",
+                    text = "Howdy $userName \uD83D\uDE0B",
                     color = Color.White
                 )
                     },
@@ -405,7 +451,7 @@ fun MapScreen(
                     center = currentLocation.position,
                     radius = 1000.0,
                     strokeColor = Color.Red,
-                    fillColor = Color(0x220000FF),
+                    fillColor = Color(0x22AD3030),
                     strokeWidth = 2f
                 )
                 // Marker para posicao atual
@@ -433,7 +479,8 @@ fun MapScreen(
                         "Infected Zone" -> {icon = R.drawable.infected_zone_icon}
                     }
                     MarkerComposable(
-                        state = MarkerState(position = LatLng(it.latitude, it.longitude))
+                        state = MarkerState(position = LatLng(it.latitude, it.longitude)),
+                        title = "Teste",
                     ){
                         Image(
                             painter = painterResource(icon),
@@ -442,7 +489,6 @@ fun MapScreen(
                     }
                 }
             }
-
             ExtendedFloatingActionButton(
                 onClick = {
                     // Navegar para o ecra do formulario do mapa
@@ -452,8 +498,8 @@ fun MapScreen(
                 contentColor = Color.White,
                 modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp),
             ) {
-                Text(text = "Report place")
                 Icon(Icons.Filled.Add, "Floating button")
+                Text(text = "Report \uD83C\uDF0D")
             }
         }
     }

@@ -142,7 +142,6 @@ fun LoginScreen(navController: NavHostController, viewModel: UserViewModel) {
                             focusedIndicatorColor = Color.Transparent,
                             unfocusedIndicatorColor = Color.Transparent
                         )
-
                     )
                     Spacer(Modifier.height(10.dp))
                     Button(

@@ -24,6 +24,7 @@ class BlogRepository {
             }
             blogList
         } catch (e: Exception) {
+            Log.d("ERROR", e.toString())
             emptyList()
         }
     }
