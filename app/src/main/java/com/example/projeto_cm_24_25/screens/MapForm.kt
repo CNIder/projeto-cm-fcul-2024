@@ -41,11 +41,13 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
 import androidx.navigation.NavHostController
+import com.example.projeto_cm_24_25.R
 import com.example.projeto_cm_24_25.data.MapViewModel
 import com.example.projeto_cm_24_25.data.model.ItemMarker
 import com.example.projeto_cm_24_25.navigation.Screen
@@ -96,7 +98,9 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
         CenterAlignedTopAppBar(
             title = { Text("Report Place") },
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = primaryColor
+                containerColor = primaryColor,
+                titleContentColor = Color.White,
+                navigationIconContentColor = Color.White
             ),
             navigationIcon = {
                 IconButton(onClick = {
@@ -118,11 +122,16 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
                 Text(
                     "Zone name",
                     style = TextStyle(
-                        fontSize = 14.sp,
+                        fontSize = 15.sp,
                         color = Color.White
                     )
                 )
             },
+            textStyle = TextStyle(
+                fontSize = 20.sp,
+                color = Color.White,
+                fontWeight = FontWeight.Bold
+            ),
             placeholder = {
                 Text("e.g, FCUL \uD83C\uDFEB safe place")
             },
@@ -135,7 +144,8 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
                 focusedContainerColor = Color.Black,
                 unfocusedContainerColor = Color.Black,
                 focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent
+                unfocusedIndicatorColor = Color.Transparent,
+                unfocusedTextColor = Color.White
             )
         )
 
@@ -194,28 +204,34 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
 
         // Botao para submeter formulario
         Button(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
             onClick = {
                 // Validar campos
                 if(textInput.isEmpty()) {
-                    Toast.makeText(context, "Please provide a location name", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "❌ Please provide a location name", Toast.LENGTH_SHORT).show()
                     return@Button
                 } else if (selectedText.isEmpty()) {
-                    Toast.makeText(context, "Please provide the location type", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "❌ Please provide the location type", Toast.LENGTH_SHORT).show()
                     return@Button
                 } else if (markerPosition == null) {
-                    Toast.makeText(context, "Click on the map to choose location", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "❌ Click on the map to choose location", Toast.LENGTH_SHORT).show()
                     return@Button
                 }
 
                 val itemMarker = ItemMarker(
                     textInput,
                     selectedText,
+                    icon = when(selectedText) {
+                        "Safe Zone" -> R.drawable.safe_zone_icon.toString()
+                        "Infected Zone" -> R.drawable.infected_zone_icon.toString()
+                        "Supply Zone" -> R.drawable.supply_zone_icon.toString()
+                        else -> ""
+                    },
                     markerPosition!!.latitude,
                     markerPosition!!.longitude
                 )
-                //mapViewModel.addMarker(itemMarker)
-                Toast.makeText(context, "Adicionado com Sucesso !\uD83E\uDD17", Toast.LENGTH_LONG).show()
+                mapViewModel.addMarker(itemMarker)
+                Toast.makeText(context, "\uD83D\uDCDD Posted successfully !", Toast.LENGTH_LONG).show()
                 navController.popBackStack()
             },
             shape = RectangleShape,
@@ -223,7 +239,7 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
                 containerColor = Color.Red
             )
         ) {
-            Text("Report Place")
+            Text("Report \uD83C\uDF0D")
         }
     }
 }

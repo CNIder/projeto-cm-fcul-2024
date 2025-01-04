@@ -27,19 +27,18 @@ import com.example.projeto_cm_24_25.ui.theme.primaryColor
 
 @Composable
 fun HomeScreen(navController: NavHostController) {
-    // list of all screens in bottom bar
+    // Lista do ecras no Bottom Bar
     val navItemList = listOf(
         NavigationItem("Map", Icons.Default.Place),
-        //NavigationItem("Users", Icons.Default.Person),
         NavigationItem("Blog", Icons.Default.Menu),
     )
-    // selected index variable
+
     var selectedTabIndex by remember {
         mutableIntStateOf(0)
     }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        // bottom bar
+        // Bottom bar
         bottomBar = {
             NavigationBar(
                 containerColor = primaryColor
@@ -54,6 +53,15 @@ fun HomeScreen(navController: NavHostController) {
                         label = {
                             Text(navItem.label)
                         },
+                        colors = NavigationBarItemColors(
+                            selectedIconColor = Color.Red,
+                            selectedTextColor = Color.White,
+                            selectedIndicatorColor = Color.White,
+                            disabledIconColor = Color.Unspecified,
+                            disabledTextColor = Color.Unspecified,
+                            unselectedTextColor = Color.Black,
+                            unselectedIconColor = Color.Black,
+                        )
                     )
                 }
             }

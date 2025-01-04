@@ -12,8 +12,8 @@ class NotificationApplication: Application() {
     override fun onCreate() {
         super.onCreate()
         val notificationChannel = NotificationChannel(
-            "Water_reminder",
-            "Water remainder channel",
+            "SurvivorApp",
+            "SurvivorApp channel",
             NotificationManager.IMPORTANCE_HIGH
         )
         notificationChannel.description = "A description ..."

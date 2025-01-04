@@ -24,4 +24,5 @@ class MapViewModel: ViewModel() {
     fun addMarker(marker: ItemMarker) {
         mapRepository.addBlogData(marker)
     }
+
 }

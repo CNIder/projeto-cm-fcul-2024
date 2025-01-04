@@ -7,6 +7,13 @@ import android.location.Location
 import android.os.Looper
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.animation.animateColor
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -48,6 +55,7 @@ import androidx.navigation.NavHostController
 import com.example.projeto_cm_24_25.R
 import com.example.projeto_cm_24_25.data.AccerelometerViewModel
 import com.example.projeto_cm_24_25.data.MapViewModel
+import com.example.projeto_cm_24_25.data.model.ItemMarker
 import com.example.projeto_cm_24_25.data.repository.DataStoreRepository
 import com.example.projeto_cm_24_25.navigation.Screen
 import com.example.projeto_cm_24_25.ui.theme.primaryColor
@@ -76,6 +84,7 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberMarkerState
 import kotlin.math.atan2
+import kotlin.math.ceil
 import kotlin.math.cos
 import kotlin.math.pow
 import kotlin.math.sin
@@ -125,12 +134,18 @@ fun MapScreen(
     )
     val sensorViewModel = remember { AccerelometerViewModel(location) }
     val showDialog = remember { mutableStateOf(false) }
+    val showAlert = remember { mutableStateOf(true) }
+    val insertUserPosition = remember { mutableStateOf(true) }
+
+    val dataStore = DataStoreRepository(location)
+    val userName = dataStore.getUserName.collectAsState(initial = "").value
 
     LaunchedEffect(true) {
         // Permissao para aceder a localizacao atual
         locationPermissionState.launchMultiplePermissionRequest()
         mapViewModel.getMarkers()
     }
+
 
     DisposableEffect(Unit){
         sensorViewModel.startListening()
@@ -160,43 +175,31 @@ fun MapScreen(
                 location?.let {
                     Log.d("ACT", location.toString())
                     currentLocation.position = LatLng(location.latitude, location.longitude)
-                    // Zoom para localizacao atual
-                    cameraPositionState.position = CameraPosition.fromLatLngZoom(currentLocation.position, 10f)
+                    // Guardar a posicao no firebase
+                    if (userName != null) {
+                        if(userName.isNotEmpty()) {
+                            // Zoom para localizacao atual
+                            if (insertUserPosition.value) {
+                                cameraPositionState.position =
+                                    CameraPosition.fromLatLngZoom(currentLocation.position, 10f)
+                                insertUserPosition.value = false
+                            }
+
+                            mapViewModel.addMarker(
+                                ItemMarker(
+                                    name = userName,
+                                    type = "User",
+                                    icon = R.drawable.user_zone_icon.toString(),
+                                    latitude = location.latitude,
+                                    longitude = location.longitude
+                                )
+                            )
+                        }
+                    }
                 }
             }.addOnFailureListener {}
         }
     }
-
-    /*locationCallback = object : LocationCallback() {
-        override fun onLocationResult(p0: LocationResult) {
-            super.onLocationResult(p0)
-            for (location in p0.locations) {
-                // Log.d("ACT", location.toString())
-            }
-        }
-    }
-    fusedLocationClient = LocationServices.getFusedLocationProviderClient(location)
-    LaunchedEffect(true) {
-        mapViewModel.getMarkers()
-    }
-    if (ActivityCompat.checkSelfPermission(
-            location,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-            location,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        ) != PackageManager.PERMISSION_GRANTED
-    ) {
-
-    }
-    fusedLocationClient.lastLocation
-        .addOnSuccessListener { location: Location? ->
-            if (location != null) {
-                currentLocation.position = LatLng(location.latitude, location.longitude)
-                cameraPositionState.position = CameraPosition.fromLatLngZoom(currentLocation.position, 10f)
-            }
-            startLocationUpdates()
-        }*/
 
     val properties by remember {
         mutableStateOf(MapProperties(mapStyleOptions = MapStyleOptions("""
@@ -389,8 +392,28 @@ fun MapScreen(
         """.trimIndent())))
     }
 
-    val dataStore = DataStoreRepository(location)
-    val userName = dataStore.getUserName.collectAsState(initial = "").value
+    // Definir animacoes nas cores
+    val transition = rememberInfiniteTransition(label = "infinite")
+
+    val colorInfected by transition.animateColor(
+        initialValue = Color(0xB9C01616),
+        targetValue = Color(0x9FF6F2F2),
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "color"
+    )
+
+    val colorSafe by transition.animateColor(
+        initialValue = Color(0xB91CC016),
+        targetValue = Color(0x9FF6F2F2),
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "color"
+    )
 
     Column(
         modifier = modifier
@@ -447,48 +470,67 @@ fun MapScreen(
                 uiSettings = MapUiSettings(zoomControlsEnabled = true),
                 properties = properties
             ) {
-                Circle(
-                    center = currentLocation.position,
-                    radius = 1000.0,
-                    strokeColor = Color.Red,
-                    fillColor = Color(0x22AD3030),
-                    strokeWidth = 2f
-                )
+
                 // Marker para posicao atual
                 Marker(
-                    state = currentLocation
+                    state = currentLocation,
+                    title = "You are here \uD83D\uDE01"
                 )
-                // Markers para pontos de interesse
-                markerList.value.forEach {
+                // Mostra os markers com os pontos registados e a localizacao dos utilizadores
+                markerList.value.filter { it.name != userName }.forEach {
                     val distance : Double = haversineDistance(
                         currentLocation.position.latitude,
                         currentLocation.position.longitude,
                         it.latitude,
                         it.longitude
                     )
-                    println("Distance is $distance")
 
                     // Alerta utilizador para proximidade de zona perigosa
-                    if (distance < 50 && it.type == "Infected Zone") {
-                        notificationService.showNotification()
+                    if (distance < 5 && it.type == "Infected Zone") {
+                        if(showAlert.value) {
+                            notificationService.showNotification(
+                                "⚠\uFE0F Alert ⚠\uFE0F",
+                                "You are near a zombie area. Go away \uD83D\uDE0E"
+                            )
+                            showAlert.value = !showAlert.value
+                        }
                     }
 
-                    var icon = 0
-                    when(it.type) {
-                        "Safe Zone" -> { icon = R.drawable.safe_zone_icon }
-                        "Infected Zone" -> {icon = R.drawable.infected_zone_icon}
+                    // Se a area for infetada mostra o circulo
+                    if(it.type == "Infected Zone") {
+                        Circle(
+                            center = LatLng(it.latitude, it.longitude),
+                            radius = 70.0,
+                            strokeColor = primaryColor,
+                            fillColor = colorInfected,
+                            strokeWidth = 2f
+                        )
+                    } else {
+                        Circle(
+                            center = LatLng(it.latitude, it.longitude),
+                            radius = 50.0,
+                            strokeColor = primaryColor,
+                            fillColor = colorSafe,
+                            strokeWidth = 2f
+                        )
                     }
                     MarkerComposable(
                         state = MarkerState(position = LatLng(it.latitude, it.longitude)),
-                        title = "Teste",
+                        title = it.name,
+                        snippet = "${it.type} at ${ceil(distance)} km",
+                        onClick = {
+                            cameraPositionState.position = CameraPosition.fromLatLngZoom(it.position, 18f)
+                            false
+                        }
                     ){
                         Image(
-                            painter = painterResource(icon),
+                            painter = painterResource(it.icon.toInt()),
                             contentDescription = "image on marker"
                         )
                     }
                 }
             }
+
             ExtendedFloatingActionButton(
                 onClick = {
                     // Navegar para o ecra do formulario do mapa

@@ -5,4 +5,5 @@ sealed class Screen(val route: String) {
     object Home: Screen(route = "home_screen")
     object BlogForm: Screen(route = "blog_form_screen")
     object MapForm: Screen(route = "map_form_screen")
+    object BlogReader: Screen(route = "blog_reader_screen/{author}/{title}/{content}")
 }

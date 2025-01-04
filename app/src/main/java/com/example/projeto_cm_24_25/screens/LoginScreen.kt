@@ -38,6 +38,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
@@ -56,12 +57,6 @@ fun LoginScreen(navController: NavHostController, viewModel: UserViewModel) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val dataStore = DataStoreRepository(context)
-    val userName = dataStore.getUserName.collectAsState(initial = "")
-
-    // Se o utilizador estiver registado ir para Home Screen
-    if(userName.value!!.isNotEmpty()) {
-        navController.navigate(Screen.Home.route)
-    }
 
     Box(
         modifier = Modifier
@@ -153,7 +148,7 @@ fun LoginScreen(navController: NavHostController, viewModel: UserViewModel) {
                             }
                             // Guardar o nome no DataStore
                             scope.launch {
-                                dataStore.saveUserName(name)
+                                dataStore.saveUserName(name.lowercase())
                             }
                             navController.navigate(Screen.Home.route)
                         },

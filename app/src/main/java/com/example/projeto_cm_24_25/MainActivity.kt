@@ -2,15 +2,21 @@ package com.example.projeto_cm_24_25
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.core.app.ActivityCompat
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.example.projeto_cm_24_25.data.repository.DataStoreRepository
 import com.example.projeto_cm_24_25.navigation.NavGraph
+import com.example.projeto_cm_24_25.navigation.Screen
 import com.example.projeto_cm_24_25.ui.theme.Projetocm2425Theme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
