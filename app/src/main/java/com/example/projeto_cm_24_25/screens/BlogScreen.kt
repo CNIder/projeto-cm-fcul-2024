@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -57,6 +58,7 @@ fun BlogScreen(
     val dataStore = DataStoreRepository(context)
     val userName = dataStore.getUserName.collectAsState(initial = "").value
 
+    val isLoading = viewModel.isLoading.observeAsState()
     LaunchedEffect(true) {
         viewModel.getBlogData()
     }
@@ -75,38 +77,57 @@ fun BlogScreen(
                 containerColor = primaryColor
             ),
         )
-        Box()
-        {
-            // Lista dos blogs publicados
-            LazyColumn(
-                modifier = Modifier.fillMaxSize()
-                    .background(Color.Black)
-                    .padding(10.dp)
-            ){
-                items(blogData.value) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth()
-                            .padding(10.dp),
-                        verticalArrangement = Arrangement.SpaceBetween
-                    ){
-                        BlogItem(it, navController)
+        if(isLoading.value == true) {
+            Loading()
+        } else {
+            Box()
+            {
+                // Lista dos blogs publicados
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize()
+                        .background(Color.Black)
+                        .padding(10.dp)
+                ) {
+                    items(blogData.value) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth()
+                                .padding(10.dp),
+                            verticalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            BlogItem(it, navController)
+                        }
                     }
                 }
-            }
 
-            ExtendedFloatingActionButton(
-                onClick = {
-                    // Navegar para o ecra do formulario do blog
-                    navController.navigate(Screen.BlogForm.route)
-                },
-                containerColor = primaryColor,
-                contentColor = Color.White,
-                modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 12.dp),
-            ) {
-                Icon(Icons.Filled.Add, "Floating button")
-                Text(text = "Add Post \uD83D\uDCDD")
+                ExtendedFloatingActionButton(
+                    onClick = {
+                        // Navegar para o ecra do formulario do blog
+                        navController.navigate(Screen.BlogForm.route)
+                    },
+                    containerColor = primaryColor,
+                    contentColor = Color.White,
+                    modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 12.dp),
+                ) {
+                    Icon(Icons.Filled.Add, "Floating button")
+                    Text(text = "Add Post \uD83D\uDCDD")
+                }
             }
         }
+    }
+}
+
+@Composable
+fun Loading() {
+    Column(
+        modifier = Modifier.fillMaxSize()
+            .background(Color.Black)
+            .padding(10.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ){
+        CircularProgressIndicator(
+            color = primaryColor
+        )
     }
 }
 

@@ -216,7 +216,14 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
                 } else if (markerPosition == null) {
                     Toast.makeText(context, "❌ Click on the map to choose location", Toast.LENGTH_SHORT).show()
                     return@Button
+                } else if (containsInvalidChars(textInput)) {
+                    Toast.makeText(
+                        context,
+                        "❌ name should not contain '.', '$', '#', '[' or ']' !",
+                        Toast.LENGTH_SHORT).show()
+                    return@Button
                 }
+
 
                 val itemMarker = ItemMarker(
                     textInput,
@@ -242,4 +249,10 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
             Text("Report \uD83C\uDF0D")
         }
     }
+}
+
+fun containsInvalidChars(name: String): Boolean {
+    return name.contains(".") || name.contains("#") ||
+            name.contains("\$") || name.contains("[") ||
+            name.contains("[")
 }

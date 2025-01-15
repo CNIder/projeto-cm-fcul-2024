@@ -9,14 +9,18 @@ import com.example.projeto_cm_24_25.data.repository.BlogRepository
 import kotlinx.coroutines.launch
 
 class BlogViewModel: ViewModel() {
-    val blogRepository : BlogRepository = BlogRepository()
+    private val blogRepository : BlogRepository = BlogRepository()
     private val _blogData = MutableLiveData<List<Blog>>()
     val blogData : LiveData<List<Blog>> = _blogData
+    private val _isLoading = MutableLiveData<Boolean>(false)
+    val isLoading : LiveData<Boolean> = _isLoading
 
     fun getBlogData() {
+        _isLoading.postValue(true)
         viewModelScope.launch {
             val blogResult = blogRepository.fetchBlogData()
             _blogData.value = blogResult
+            _isLoading.postValue(false)
         }
     }
 

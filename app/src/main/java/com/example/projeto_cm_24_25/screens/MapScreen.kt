@@ -55,6 +55,7 @@ import androidx.navigation.NavHostController
 import com.example.projeto_cm_24_25.R
 import com.example.projeto_cm_24_25.data.AccerelometerViewModel
 import com.example.projeto_cm_24_25.data.MapViewModel
+import com.example.projeto_cm_24_25.data.model.AlertData
 import com.example.projeto_cm_24_25.data.model.ItemMarker
 import com.example.projeto_cm_24_25.data.repository.DataStoreRepository
 import com.example.projeto_cm_24_25.navigation.Screen
@@ -91,25 +92,7 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 private lateinit var fusedLocationClient: FusedLocationProviderClient
-private lateinit var locationCallback: LocationCallback
 
-@SuppressLint("MissingPermission")
-private fun startLocationUpdates() {
-    locationCallback?.let {
-        val locationRequest = LocationRequest.Builder(
-            Priority.PRIORITY_HIGH_ACCURACY, 100
-        ).setWaitForAccurateLocation(false)
-            .setMinUpdateIntervalMillis(25000)
-            .setMaxUpdateDelayMillis(100)
-            .build()
-
-        fusedLocationClient?.requestLocationUpdates(
-            locationRequest,
-            it,
-            Looper.getMainLooper()
-        )
-    }
-}
 
 @SuppressLint("RememberReturnType")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
@@ -120,6 +103,7 @@ fun MapScreen(
     navController: NavHostController
 ) {
     val markerList = mapViewModel.markerData.observeAsState(emptyList())
+    val userAlertList = mapViewModel.userAlerts.observeAsState(emptyList())
     val location = LocalContext.current
     var currentLocation = rememberMarkerState(position = LatLng(0.0,0.0))
     val cameraPositionState = rememberCameraPositionState {}
@@ -135,6 +119,7 @@ fun MapScreen(
     val sensorViewModel = remember { AccerelometerViewModel(location) }
     val showDialog = remember { mutableStateOf(false) }
     val showAlert = remember { mutableStateOf(true) }
+    val showUserNotification = mapViewModel.showAlertNotification.observeAsState(true)
     val insertUserPosition = remember { mutableStateOf(true) }
 
     val dataStore = DataStoreRepository(location)
@@ -143,9 +128,10 @@ fun MapScreen(
     LaunchedEffect(true) {
         // Permissao para aceder a localizacao atual
         locationPermissionState.launchMultiplePermissionRequest()
+        // inicializar a busca dos dados dos markers
         mapViewModel.getMarkers()
+        mapViewModel.getAlerts()
     }
-
 
     DisposableEffect(Unit){
         sensorViewModel.startListening()
@@ -173,7 +159,7 @@ fun MapScreen(
                 CancellationTokenSource().token
             ).addOnSuccessListener { location ->
                 location?.let {
-                    Log.d("ACT", location.toString())
+                    //Log.d("ACT", location.toString())
                     currentLocation.position = LatLng(location.latitude, location.longitude)
                     // Guardar a posicao no firebase
                     if (userName != null) {
@@ -184,16 +170,6 @@ fun MapScreen(
                                     CameraPosition.fromLatLngZoom(currentLocation.position, 10f)
                                 insertUserPosition.value = false
                             }
-
-                            mapViewModel.addMarker(
-                                ItemMarker(
-                                    name = userName,
-                                    type = "User",
-                                    icon = R.drawable.user_zone_icon.toString(),
-                                    latitude = location.latitude,
-                                    longitude = location.longitude
-                                )
-                            )
                         }
                     }
                 }
@@ -436,7 +412,15 @@ fun MapScreen(
                     Button(
                         onClick = {
                             showDialog.value = false
-                            Toast.makeText(location, "Go to a safe location", Toast.LENGTH_LONG).show()
+                            // Utilizador nao esta seguro
+                            if(!userName.isNullOrEmpty()) {
+                                mapViewModel.addUserAlert(
+                                    AlertData(
+                                        username = userName,
+                                        safe = "false"
+                                    )
+                                )
+                            }
                         }
                     ) {
                         Text("Yes")
@@ -476,6 +460,21 @@ fun MapScreen(
                     state = currentLocation,
                     title = "You are here \uD83D\uDE01"
                 )
+
+                userAlertList.value.forEach {
+                    println(it.toString())
+                    // se utilizador nao estiver seguro emite notificacao
+                    if(it.safe.equals("false")) {
+                        if(showUserNotification.value) {
+                            notificationService.showNotification(
+                                "⚠\uFE0F Alert ⚠\uFE0F",
+                                "${it.username} is in danger. Help!"
+                            )
+                            mapViewModel.disableUserNotification()
+                        }
+                    }
+                }
+
                 // Mostra os markers com os pontos registados e a localizacao dos utilizadores
                 markerList.value.filter { it.name != userName }.forEach {
                     val distance : Double = haversineDistance(
