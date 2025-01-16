@@ -169,6 +169,16 @@ fun MapScreen(
                                 cameraPositionState.position =
                                     CameraPosition.fromLatLngZoom(currentLocation.position, 10f)
                                 insertUserPosition.value = false
+
+                                mapViewModel.addMarker(
+                                    ItemMarker(
+                                        name = userName,
+                                        type = "User",
+                                        icon = R.drawable.user_zone_icon.toString(),
+                                        latitude = location.latitude,
+                                        longitude = location.longitude
+                                    )
+                                )
                             }
                         }
                     }
@@ -462,7 +472,6 @@ fun MapScreen(
                 )
 
                 userAlertList.value.forEach {
-                    println(it.toString())
                     // se utilizador nao estiver seguro emite notificacao
                     if(it.safe.equals("false")) {
                         if(showUserNotification.value) {
@@ -518,14 +527,36 @@ fun MapScreen(
                         title = it.name,
                         snippet = "${it.type} at ${ceil(distance)} km",
                         onClick = {
-                            cameraPositionState.position = CameraPosition.fromLatLngZoom(it.position, 18f)
+                            cameraPositionState.position = CameraPosition.fromLatLngZoom(it.position, 17f)
                             false
                         }
                     ){
-                        Image(
-                            painter = painterResource(it.icon.toInt()),
-                            contentDescription = "image on marker"
-                        )
+                        when(it.type) {
+                            "Safe Zone" -> {
+                                Image(
+                                    painter = painterResource(R.drawable.safe_zone_icon),
+                                    contentDescription = "image on marker"
+                                )
+                            }
+                            "Infected Zone" -> {
+                                Image(
+                                    painter = painterResource(R.drawable.infected_zone_icon),
+                                    contentDescription = "image on marker"
+                                )
+                            }
+                            "Supply Zone" -> {
+                                Image(
+                                    painter = painterResource(R.drawable.supply_zone_icon),
+                                    contentDescription = "image on marker"
+                                )
+                            }
+                            else -> {
+                                Image(
+                                    painter = painterResource(R.drawable.user_zone_icon),
+                                    contentDescription = "image on marker"
+                                )
+                            }
+                        }
                     }
                 }
             }
