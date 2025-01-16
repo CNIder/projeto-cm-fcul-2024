@@ -2,7 +2,10 @@ package com.example.projeto_cm_24_25.screens
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.location.Location
 import android.os.Looper
 import android.util.Log
@@ -90,6 +93,69 @@ import kotlin.math.cos
 import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import androidx.compose.ui.geometry.Offset
+import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+
+fun resizeIcon(resourceId: Int, context: Context, width: Int, height: Int): BitmapDescriptor {
+    val bitmap = BitmapFactory.decodeResource(context.resources, resourceId)
+    val scaledBitmap = Bitmap.createScaledBitmap(bitmap, width, height, false)
+    return BitmapDescriptorFactory.fromBitmap(scaledBitmap)
+}
+
+@Composable
+fun rememberDeviceOrientation(): Float {
+    val context = LocalContext.current
+    val sensorManager = context.getSystemService(SensorManager::class.java)
+
+    val azimuth = remember { mutableStateOf(0f) }
+
+    DisposableEffect(Unit) {
+        val sensorEventListener = object : SensorEventListener {
+            val accelerometerValues = FloatArray(3)
+            val magnetometerValues = FloatArray(3)
+
+            override fun onSensorChanged(event: SensorEvent?) {
+                event?.let {
+                    when (event.sensor.type) {
+                        Sensor.TYPE_ACCELEROMETER -> {
+                            System.arraycopy(event.values, 0, accelerometerValues, 0, accelerometerValues.size)
+                        }
+                        Sensor.TYPE_MAGNETIC_FIELD -> {
+                            System.arraycopy(event.values, 0, magnetometerValues, 0, magnetometerValues.size)
+                        }
+                    }
+
+                    val rotationMatrix = FloatArray(9)
+                    val orientationAngles = FloatArray(3)
+
+                    if (SensorManager.getRotationMatrix(rotationMatrix, null, accelerometerValues, magnetometerValues)) {
+                        SensorManager.getOrientation(rotationMatrix, orientationAngles)
+                        azimuth.value = Math.toDegrees(orientationAngles[0].toDouble()).toFloat()
+                    }
+                }
+            }
+
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+        }
+
+        val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+        val magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
+
+        sensorManager.registerListener(sensorEventListener, accelerometer, SensorManager.SENSOR_DELAY_UI)
+        sensorManager.registerListener(sensorEventListener, magnetometer, SensorManager.SENSOR_DELAY_UI)
+
+        onDispose {
+            sensorManager.unregisterListener(sensorEventListener)
+        }
+    }
+
+    return azimuth.value
+}
 
 private lateinit var fusedLocationClient: FusedLocationProviderClient
 
@@ -106,6 +172,7 @@ fun MapScreen(
     val userAlertList = mapViewModel.userAlerts.observeAsState(emptyList())
     val location = LocalContext.current
     var currentLocation = rememberMarkerState(position = LatLng(0.0,0.0))
+    val azimuth = rememberDeviceOrientation()
     val cameraPositionState = rememberCameraPositionState {}
     val notificationService = NotificationService(location)
 
@@ -468,7 +535,10 @@ fun MapScreen(
                 // Marker para posicao atual
                 Marker(
                     state = currentLocation,
-                    title = "You are here \uD83D\uDE01"
+                    title = "Você está aqui",
+                    icon = resizeIcon(R.drawable.user_location, location, 64, 64), // Use um ícone com seta para direção
+                    rotation = (azimuth + 180) % 360, // Inverte o sentido
+                    anchor = Offset(0.5f, 0.5f)
                 )
 
                 userAlertList.value.forEach {
