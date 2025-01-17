@@ -1,7 +1,11 @@
 package com.example.projeto_cm_24_25.screens
 
+import android.content.Context
+import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -10,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -46,12 +51,18 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
+import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
+import androidx.viewbinding.BuildConfig
+import coil3.compose.AsyncImage
 import com.example.projeto_cm_24_25.R
 import com.example.projeto_cm_24_25.data.MapViewModel
 import com.example.projeto_cm_24_25.data.model.ItemMarker
 import com.example.projeto_cm_24_25.navigation.Screen
 import com.example.projeto_cm_24_25.ui.theme.primaryColor
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.DragState
@@ -60,8 +71,12 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberMarkerState
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Objects
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
     val context = LocalContext.current
@@ -92,6 +107,29 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
 
     var textInput by remember { mutableStateOf("") }
 
+    // permissao da camera handler
+    val cameraPermissionState = rememberPermissionState(
+        android.Manifest.permission.CAMERA
+    )
+
+    var capturedImageUri by remember {
+        mutableStateOf<Uri>(Uri.EMPTY)
+    }
+
+    val file = context.createImageFile()
+    val uri = FileProvider.getUriForFile(
+        Objects.requireNonNull(context),
+        context.packageName + ".provider", file
+    )
+
+    var cameraLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ) {
+
+        capturedImageUri = uri
+    }
+
+
     Column(
         modifier = Modifier.fillMaxSize()
     ){
@@ -114,6 +152,15 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
                 }
             }
         )
+
+        // mostra imagem tirada
+        if(capturedImageUri.path?.isNotEmpty() == true) {
+            AsyncImage(
+                model = capturedImageUri,
+                contentDescription = "photo taked",
+                modifier = Modifier.size(50.dp, 50.dp)
+            )
+        }
 
         TextField(
             value = textInput,
@@ -201,6 +248,25 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
             }
         }
 
+        // Botao para tirar foto
+        Button(
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            onClick = {
+                // chamar permissao para camera
+                if(!cameraPermissionState.status.isGranted) {
+                    cameraPermissionState.launchPermissionRequest()
+                } else {
+                    // tira foto e guarda o URI
+                    cameraLauncher.launch(uri)
+                }
+            },
+            shape = RectangleShape,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Red
+            )
+        ) {
+            Text("Take photo")
+        }
 
         // Botao para submeter formulario
         Button(
@@ -255,4 +321,17 @@ fun containsInvalidChars(name: String): Boolean {
     return name.contains(".") || name.contains("#") ||
             name.contains("\$") || name.contains("[") ||
             name.contains("[")
+}
+
+
+fun Context.createImageFile(): File {
+    // Create an image file name
+    val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+    val imageFileName = "JPEG_" + timeStamp + "_"
+    val image = File.createTempFile(
+        imageFileName, /* prefix */
+        ".jpg", /* suffix */
+        externalCacheDir      /* directory */
+    )
+    return image
 }

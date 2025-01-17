@@ -205,20 +205,20 @@ fun BlogFormScreen(viewModel: BlogViewModel, navController: NavHostController) {
                     publishedDate = LocalDateTime.now().format(
                         DateTimeFormatter.ofPattern("dd-MM-yyyy")
                     ),
-                    imageUri = when(selectedOption) {
+                    type = when(selectedOption) {
                         BlogType.COMBAT.type -> {
-                            R.drawable.blog_combact
+                            "COMBAT"
                         }
                         BlogType.MEDICINE.type -> {
-                            R.drawable.blog_medicine
+                            "MEDICINE"
                         }
                         BlogType.SURVIVAL.type -> {
-                            R.drawable.blog_survival
+                            "SURVIVAL"
                         }
                         BlogType.LIFESTYLE.type -> {
-                            R.drawable.blog_lifestyle
+                            "LIFESTYLE"
                         }
-                        else -> {0}
+                        else -> {""}
                     }
                 )
 

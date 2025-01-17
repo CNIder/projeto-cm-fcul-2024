@@ -5,5 +5,5 @@ data class Blog(
     val title: String = "",
     val content: String = "",
     val publishedDate: String = "",
-    val imageUri: Int = 0
+    val type: String = "",
 )

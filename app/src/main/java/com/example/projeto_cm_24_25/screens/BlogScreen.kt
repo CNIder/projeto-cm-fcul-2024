@@ -146,17 +146,17 @@ fun BlogItem(blog: Blog, navController: NavHostController) {
             horizontalAlignment = Alignment.CenterHorizontally
         ){
             Text(
-                text = when(blog.imageUri){
-                    R.drawable.blog_combact -> {
+                text = when(blog.type){
+                    "COMBAT" -> {
                         "\uD83E\uDD1C ${blog.title} \uD83E\uDDDF"
                     }
-                    R.drawable.blog_medicine -> {
+                    "MEDICINE" -> {
                         "\uD83C\uDF3F ${blog.title} \uD83E\uDDDF"
                     }
-                    R.drawable.blog_survival -> {
+                    "SURVIVAL" -> {
                         "\uD83D\uDD25 ${blog.title} \uD83E\uDDDF"
                     }
-                    R.drawable.blog_lifestyle -> {
+                    "LIFESTYLE" -> {
                         "\uD83D\uDCF1 ${blog.title} \uD83E\uDDDF"
                     }
                     else -> {""}
@@ -169,12 +169,54 @@ fun BlogItem(blog: Blog, navController: NavHostController) {
                 modifier = Modifier.padding(10.dp)
             )
             Spacer(Modifier.height(4.dp))
-            Image(
+            when(blog.type) {
+                "COMBAT" -> {
+                    Image(
+                        painter = painterResource(R.drawable.blog_combact),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxWidth().height(200.dp),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+                "MEDICINE" -> {
+                    Image(
+                        painter = painterResource(R.drawable.blog_medicine),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxWidth().height(200.dp),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+                "SURVIVAL" -> {
+                    Image(
+                        painter = painterResource(R.drawable.blog_survival),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxWidth().height(200.dp),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+                "LIFESTYLE" -> {
+                    Image(
+                        painter = painterResource(R.drawable.blog_lifestyle),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxWidth().height(200.dp),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+                else -> {
+                    Image(
+                        painter = painterResource(R.drawable.blog_combact),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxWidth().height(200.dp),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            }
+            /*Image(
                 painter = painterResource(blog.imageUri),
                 contentDescription = null,
                 modifier = Modifier.fillMaxWidth().height(200.dp),
                 contentScale = ContentScale.Crop
-            )
+            )*/
             Spacer(Modifier.height(4.dp))
             Text(
                 text = "${blog.author} posted on ${blog.publishedDate}",
