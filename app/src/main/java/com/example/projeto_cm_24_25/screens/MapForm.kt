@@ -75,64 +75,55 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Objects
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
     val context = LocalContext.current
 
-    // List dos tipos de lugares
+    // Lista de tipos de lugares
     val placeTypes = listOf("Safe Zone", "Supply Zone", "Infected Zone")
 
-    // Variaveis para Drop Down
+    // Variáveis para Dropdown
     var expanded by remember { mutableStateOf(false) }
     var selectedText by remember { mutableStateOf("") }
-    var textfieldSize by remember { mutableStateOf(Size.Zero)}
-    val icon = if (expanded)
-        Icons.Filled.KeyboardArrowUp
-    else
-        Icons.Filled.ArrowDropDown
+    var textfieldSize by remember { mutableStateOf(Size.Zero) }
+    val icon = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.ArrowDropDown
 
-    // Posicao inicial do marker
+    // Posição inicial do marcador
     val initialPosition = LatLng(38.7223, -9.1393)
-
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(initialPosition, 10f)
     }
-    var uiSettings by remember {
-        mutableStateOf(MapUiSettings(zoomControlsEnabled = true))
-    }
-    // Posicao do marker para o utilizador indicar no mapa
+
+    var uiSettings by remember { mutableStateOf(MapUiSettings(zoomControlsEnabled = true)) }
     var markerPosition by remember { mutableStateOf<LatLng?>(null) }
-
     var textInput by remember { mutableStateOf("") }
+    var capturedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var isUploading by remember { mutableStateOf(false) }
 
-    // permissao da camera handler
-    val cameraPermissionState = rememberPermissionState(
-        android.Manifest.permission.CAMERA
-    )
-
-    var capturedImageUri by remember {
-        mutableStateOf<Uri>(Uri.EMPTY)
-    }
-
+    val cameraPermissionState = rememberPermissionState(android.Manifest.permission.CAMERA)
     val file = context.createImageFile()
-    val uri = FileProvider.getUriForFile(
-        Objects.requireNonNull(context),
-        context.packageName + ".provider", file
-    )
+    val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
 
-    var cameraLauncher = rememberLauncherForActivityResult(
+    val cameraLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.TakePicture()
-    ) {
-
-        capturedImageUri = uri
+    ) { success ->
+        if (success) {
+            capturedImageUri = uri
+        }
     }
-
 
     Column(
-        modifier = Modifier.fillMaxSize()
-    ){
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(WindowInsets.systemBars.asPaddingValues())
+    ) {
         CenterAlignedTopAppBar(
             title = { Text("Report Place") },
             colors = TopAppBarDefaults.topAppBarColors(
@@ -141,47 +132,30 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
                 navigationIconContentColor = Color.White
             ),
             navigationIcon = {
-                IconButton(onClick = {
-                    // Voltar para o ecra principal
-                    navController.popBackStack()
-                }) {
+                IconButton(onClick = { navController.popBackStack() }) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "go back to map screen"
+                        contentDescription = "Back to map screen"
                     )
                 }
             }
         )
 
-        // mostra imagem tirada
-        if(capturedImageUri.path?.isNotEmpty() == true) {
+        // Mostra a imagem capturada
+        capturedImageUri?.let { uri ->
             AsyncImage(
-                model = capturedImageUri,
-                contentDescription = "photo taked",
-                modifier = Modifier.size(50.dp, 50.dp)
+                model = uri,
+                contentDescription = "Captured photo",
+                modifier = Modifier.size(100.dp).padding(8.dp)
             )
         }
 
         TextField(
             value = textInput,
-            onValueChange = { newValue -> textInput = newValue},
-            label = {
-                Text(
-                    "Zone name",
-                    style = TextStyle(
-                        fontSize = 15.sp,
-                        color = Color.White
-                    )
-                )
-            },
-            textStyle = TextStyle(
-                fontSize = 20.sp,
-                color = Color.White,
-                fontWeight = FontWeight.Bold
-            ),
-            placeholder = {
-                Text("e.g, FCUL \uD83C\uDFEB safe place")
-            },
+            onValueChange = { textInput = it },
+            label = { Text("Zone name", style = TextStyle(fontSize = 15.sp, color = Color.White)) },
+            textStyle = TextStyle(fontSize = 20.sp, color = Color.White, fontWeight = FontWeight.Bold),
+            placeholder = { Text("e.g, FCUL \uD83C\uDFEB safe place") },
             modifier = Modifier.fillMaxWidth().padding(14.dp),
             colors = TextFieldDefaults.colors(
                 focusedTextColor = Color.White,
@@ -191,8 +165,7 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
                 focusedContainerColor = Color.Black,
                 unfocusedContainerColor = Color.Black,
                 focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                unfocusedTextColor = Color.White
+                unfocusedIndicatorColor = Color.Transparent
             )
         )
 
@@ -203,20 +176,16 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(14.dp)
-                    .onGloballyPositioned { coordinates ->
-                        textfieldSize = coordinates.size.toSize()
-                    },
-                label = {Text("Zone type")},
+                    .onGloballyPositioned { coordinates -> textfieldSize = coordinates.size.toSize() },
+                label = { Text("Zone type") },
                 trailingIcon = {
-                    Icon(icon,"contentDescription",
-                        Modifier.clickable { expanded = !expanded })
+                    Icon(icon, "contentDescription", Modifier.clickable { expanded = !expanded })
                 }
             )
             DropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
-                modifier = Modifier
-                    .width(with(LocalDensity.current){textfieldSize.width.toDp()})
+                modifier = Modifier.width(with(LocalDensity.current) { textfieldSize.width.toDp() })
             ) {
                 placeTypes.forEach { label ->
                     DropdownMenuItem(
@@ -233,86 +202,75 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
         // Mapa
         val markerState = rememberMarkerState()
         GoogleMap(
-            modifier = Modifier.fillMaxHeight(0.75f).padding(14.dp).border(width = 2.dp, color = Color.Red),
+            modifier = Modifier.fillMaxHeight(0.75f).padding(14.dp).border(2.dp, Color.Red),
             cameraPositionState = cameraPositionState,
             uiSettings = uiSettings,
             onMapClick = {
-                markerState.position = LatLng(it.latitude, it.longitude)
-                markerPosition = markerState.position
+                markerState.position = it
+                markerPosition = it
             }
-        ){
-            markerState?.let {
-                Marker(
-                    state = it,
-                )
-            }
+        ) {
+            markerState?.let { Marker(state = it) }
         }
 
-        // Botao para tirar foto
+        // Botão para tirar foto
         Button(
             modifier = Modifier.fillMaxWidth().padding(14.dp),
             onClick = {
-                // chamar permissao para camera
-                if(!cameraPermissionState.status.isGranted) {
+                if (!cameraPermissionState.status.isGranted) {
                     cameraPermissionState.launchPermissionRequest()
                 } else {
-                    // tira foto e guarda o URI
                     cameraLauncher.launch(uri)
                 }
             },
-            shape = RectangleShape,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Red
-            )
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
         ) {
-            Text("Take photo")
+            Text("Take Photo")
         }
 
-        // Botao para submeter formulario
+        // Botão para fazer upload e reportar
         Button(
             modifier = Modifier.fillMaxWidth().padding(14.dp),
             onClick = {
-                // Validar campos
-                if(textInput.isEmpty()) {
-                    Toast.makeText(context, "❌ Please provide a location name", Toast.LENGTH_SHORT).show()
-                    return@Button
-                } else if (selectedText.isEmpty()) {
-                    Toast.makeText(context, "❌ Please provide the location type", Toast.LENGTH_SHORT).show()
-                    return@Button
-                } else if (markerPosition == null) {
-                    Toast.makeText(context, "❌ Click on the map to choose location", Toast.LENGTH_SHORT).show()
-                    return@Button
-                } else if (containsInvalidChars(textInput)) {
-                    Toast.makeText(
-                        context,
-                        "❌ name should not contain '.', '$', '#', '[' or ']' !",
-                        Toast.LENGTH_SHORT).show()
+                if (textInput.isEmpty() || selectedText.isEmpty() || markerPosition == null || capturedImageUri == null) {
+                    Toast.makeText(context, "❌ All fields are required!", Toast.LENGTH_SHORT).show()
                     return@Button
                 }
 
+                isUploading = true
+                val base64Image = capturedImageUri?.let { ImgBBApi.convertImageToBase64(context, it) }
 
-                val itemMarker = ItemMarker(
-                    textInput,
-                    selectedText,
-                    icon = when(selectedText) {
-                        "Safe Zone" -> R.drawable.safe_zone_icon.toString()
-                        "Infected Zone" -> R.drawable.infected_zone_icon.toString()
-                        "Supply Zone" -> R.drawable.supply_zone_icon.toString()
-                        else -> ""
-                    },
-                    markerPosition!!.latitude,
-                    markerPosition!!.longitude
-                )
-                mapViewModel.addMarker(itemMarker)
-                Toast.makeText(context, "\uD83D\uDCDD Posted successfully !", Toast.LENGTH_LONG).show()
-                navController.popBackStack()
+                if (base64Image != null) {
+                    ImgBBApi.uploadImage(
+                        context = context,
+                        base64Image = base64Image,
+                        onSuccess = { imageUrl ->
+                            val itemMarker = ItemMarker(
+                                name = textInput,
+                                type = selectedText,
+                                icon = imageUrl, // URL retornada pelo ImgBB
+                                latitude = markerPosition!!.latitude,
+                                longitude = markerPosition!!.longitude
+                            )
+                            mapViewModel.addMarker(itemMarker) // Adiciona o marcador no Firebase
+                            isUploading = false
+                            Toast.makeText(context, "\uD83D\uDCDD Report submitted successfully!", Toast.LENGTH_LONG).show()
+                            navController.popBackStack()
+                        },
+                        onError = { error ->
+                            isUploading = false
+                            Toast.makeText(context, "❌ Upload failed: $error", Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                } else {
+                    isUploading = false
+                    Toast.makeText(context, "❌ Failed to process image!", Toast.LENGTH_SHORT).show()
+                }
             },
-            shape = RectangleShape,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Red
-            )
+            enabled = !isUploading,
+            colors = ButtonDefaults.buttonColors(containerColor = if (isUploading) Color.Gray else Color.Red)
         ) {
-            Text("Report \uD83C\uDF0D")
+            Text(if (isUploading) "Uploading..." else "Report \uD83C\uDF0D")
         }
     }
 }
