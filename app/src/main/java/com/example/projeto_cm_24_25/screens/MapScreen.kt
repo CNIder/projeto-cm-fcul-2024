@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Looper
 import android.util.Log
+import android.widget.Button
 import android.widget.Toast
 import androidx.compose.animation.animateColor
 import androidx.compose.animation.animateColorAsState
@@ -15,13 +16,17 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
@@ -49,7 +54,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.navigation.NavHostController
 import com.example.projeto_cm_24_25.R
@@ -174,7 +181,7 @@ fun MapScreen(
                                     ItemMarker(
                                         name = userName,
                                         type = "User",
-                                        icon = R.drawable.user_zone_icon.toString(),
+                                        icon = R.drawable.user_zone_icon2.toString(),
                                         latitude = location.latitude,
                                         longitude = location.longitude
                                     )
@@ -446,18 +453,8 @@ fun MapScreen(
             )
         }
 
-        TopAppBar(
-            title = {
-                Text(
-                    text = "Howdy $userName \uD83D\uDE0B",
-                    color = Color.White
-                )
-                    },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = primaryColor
-            ),
-        )
         Box{
+
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState,
@@ -534,26 +531,30 @@ fun MapScreen(
                         when(it.type) {
                             "Safe Zone" -> {
                                 Image(
-                                    painter = painterResource(R.drawable.safe_zone_icon),
-                                    contentDescription = "image on marker"
+                                    painter = painterResource(R.drawable.safe_zone_icon2),
+                                    contentDescription = "image on marker",
+                                    modifier = Modifier.size(40.dp)
                                 )
                             }
                             "Infected Zone" -> {
                                 Image(
-                                    painter = painterResource(R.drawable.infected_zone_icon),
-                                    contentDescription = "image on marker"
+                                    painter = painterResource(R.drawable.infected_zone_icon2),
+                                    contentDescription = "image on marker",
+                                    modifier = Modifier.size(40.dp)
                                 )
                             }
                             "Supply Zone" -> {
                                 Image(
-                                    painter = painterResource(R.drawable.supply_zone_icon),
-                                    contentDescription = "image on marker"
+                                    painter = painterResource(R.drawable.supply_zone_icon2),
+                                    contentDescription = "image on marker",
+                                    modifier = Modifier.size(40.dp)
                                 )
                             }
                             else -> {
                                 Image(
-                                    painter = painterResource(R.drawable.user_zone_icon),
-                                    contentDescription = "image on marker"
+                                    painter = painterResource(R.drawable.user_zone_icon2),
+                                    contentDescription = "image on marker",
+                                    modifier = Modifier.size(40.dp)
                                 )
                             }
                         }
@@ -562,17 +563,59 @@ fun MapScreen(
             }
 
             ExtendedFloatingActionButton(
+                onClick = { },
+                modifier = Modifier.size(100.dp).align(Alignment.TopEnd).padding(20.dp) ,
+                containerColor = Color(238, 31, 39)
+
+            ) {
+                Text(text = userName?.firstOrNull()?.uppercase()?.toString() ?: "?",
+                    fontSize = 20.sp)
+            }
+
+            ExtendedFloatingActionButton(
                 onClick = {
                     // Navegar para o ecra do formulario do mapa
                     navController.navigate(Screen.MapForm.route)
                 },
-                containerColor = primaryColor,
-                contentColor = Color.White,
-                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp),
+                containerColor = Color(238, 31, 39, 200),
+                contentColor = Color.Black,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 12.dp)
+                    .width(250.dp)
             ) {
-                Icon(Icons.Filled.Add, "Floating button")
-                Text(text = "Report \uD83C\uDF0D")
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+
+                    Image(
+                        painter = painterResource(R.drawable.bio_hazzard),
+                        contentDescription = "Left image",
+                        modifier = Modifier.size(20.dp)
+                    )
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(Icons.Filled.Add, contentDescription = "Floating button icon")
+                        Text(
+                            text = "Report Place",
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Image(
+                        painter = painterResource(R.drawable.bio_hazzard),
+                        contentDescription = "Right image",
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
+
         }
     }
 }

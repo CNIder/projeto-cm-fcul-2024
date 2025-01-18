@@ -1,7 +1,17 @@
 package com.example.projeto_cm_24_25.screens
 
+import android.annotation.SuppressLint
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Place
@@ -16,8 +26,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.projeto_cm_24_25.data.MapViewModel
@@ -25,6 +38,7 @@ import com.example.projeto_cm_24_25.data.BlogViewModel
 import com.example.projeto_cm_24_25.navigation.NavigationItem
 import com.example.projeto_cm_24_25.ui.theme.primaryColor
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreen(navController: NavHostController) {
     // Lista do ecras no Bottom Bar
@@ -41,26 +55,25 @@ fun HomeScreen(navController: NavHostController) {
         // Bottom bar
         bottomBar = {
             NavigationBar(
-                containerColor = primaryColor
+                containerColor =Color(38, 38, 38)
             ){
                 navItemList.forEachIndexed {index, navItem ->
                     NavigationBarItem(
                         selected = selectedTabIndex == index,
                         onClick = { selectedTabIndex = index},
                         icon = {
-                            Icon(imageVector = navItem.icon, contentDescription = null)
-                        },
-                        label = {
-                            Text(navItem.label)
+                            Icon(imageVector = navItem.icon, contentDescription = null,
+                                    modifier = Modifier.size(35.dp))
                         },
                         colors = NavigationBarItemColors(
-                            selectedIconColor = Color.Red,
+
+                            selectedIconColor = Color.White,
                             selectedTextColor = Color.White,
-                            selectedIndicatorColor = Color.White,
+                            selectedIndicatorColor = Color.Transparent,
                             disabledIconColor = Color.Unspecified,
                             disabledTextColor = Color.Unspecified,
-                            unselectedTextColor = Color.Black,
-                            unselectedIconColor = Color.Black,
+                            unselectedTextColor = Color.White,
+                            unselectedIconColor = Color.White,
                         )
                     )
                 }
@@ -69,7 +82,9 @@ fun HomeScreen(navController: NavHostController) {
     ) { innerPadding ->
         ContentScreen(modifier = Modifier.padding(innerPadding), selectedTabIndex, navController)
     }
+
 }
+
 
 @Composable
 fun ContentScreen(modifier: Modifier = Modifier, selectedIndex: Int, navController: NavHostController) {
