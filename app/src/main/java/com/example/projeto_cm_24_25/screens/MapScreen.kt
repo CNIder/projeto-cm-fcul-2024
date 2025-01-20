@@ -481,7 +481,7 @@ fun MapScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ){
-        if(sensorViewModel.acceleration.value > 6f) {
+        if(sensorViewModel.acceleration.value > 30f) {
             showDialog.value = true
         }
 

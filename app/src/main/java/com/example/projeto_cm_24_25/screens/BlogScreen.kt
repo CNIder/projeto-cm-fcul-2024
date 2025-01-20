@@ -114,6 +114,7 @@ fun BlogScreen(
                     }
                 }
             },
+
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = Color(38,38,38)
             )
@@ -287,7 +288,7 @@ fun BlogItem(blog: Blog, navController: NavHostController) {
                     text = "Posted by: ${blog.author}",
                     style = TextStyle(
                         fontSize = 14.sp,
-                        color = Color.Black,
+                        color = Color.White,
                         fontWeight = FontWeight.Bold
                     )
                 )
@@ -295,7 +296,7 @@ fun BlogItem(blog: Blog, navController: NavHostController) {
                     text = blog.publishedDate,
                     style = TextStyle(
                         fontSize = 12.sp,
-                        color = Color.Gray,
+                        color = Color.White,
                         fontWeight = FontWeight.Normal
                     )
                 )
