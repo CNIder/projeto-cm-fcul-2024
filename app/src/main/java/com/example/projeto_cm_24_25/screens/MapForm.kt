@@ -98,58 +98,48 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Objects
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
     val context = LocalContext.current
 
-    // List dos tipos de lugares
+    // Lista de tipos de lugares
     val placeTypes = listOf("Safe Zone", "Supply Zone", "Infected Zone")
 
-    // Variaveis para Drop Down
+    // Variáveis para Dropdown
     var expanded by remember { mutableStateOf(false) }
     var selectedText by remember { mutableStateOf("") }
-    var textfieldSize by remember { mutableStateOf(Size.Zero)}
-    val icon = if (expanded)
-        Icons.Filled.KeyboardArrowUp
-    else
-        Icons.Filled.ArrowDropDown
+    var textfieldSize by remember { mutableStateOf(Size.Zero) }
+    val icon = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.ArrowDropDown
 
-    // Posicao inicial do marker
+    // Posição inicial do marcador
     val initialPosition = LatLng(38.7223, -9.1393)
-
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(initialPosition, 10f)
     }
-    var uiSettings by remember {
-        mutableStateOf(MapUiSettings(zoomControlsEnabled = true))
-    }
-    // Posicao do marker para o utilizador indicar no mapa
+
+    var uiSettings by remember { mutableStateOf(MapUiSettings(zoomControlsEnabled = true)) }
     var markerPosition by remember { mutableStateOf<LatLng?>(null) }
-
     var textInput by remember { mutableStateOf("") }
+    var capturedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var isUploading by remember { mutableStateOf(false) }
 
-    // permissao da camera handler
-    val cameraPermissionState = rememberPermissionState(
-        android.Manifest.permission.CAMERA
-    )
-
-    var capturedImageUri by remember {
-        mutableStateOf<Uri>(Uri.EMPTY)
-    }
-
+    val cameraPermissionState = rememberPermissionState(android.Manifest.permission.CAMERA)
     val file = context.createImageFile()
-    val uri = FileProvider.getUriForFile(
-        Objects.requireNonNull(context),
-        context.packageName + ".provider", file
-    )
+    val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
 
-    var cameraLauncher = rememberLauncherForActivityResult(
+    val cameraLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.TakePicture()
-    ) {
-
-        capturedImageUri = uri
+    ) { success ->
+        if (success) {
+            capturedImageUri = uri
+        }
     }
     val scrollState = rememberScrollState()
 
