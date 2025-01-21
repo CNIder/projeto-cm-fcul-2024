@@ -103,6 +103,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import com.example.projeto_cm_24_25.utils.getDarkMapStyle
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
@@ -303,202 +304,8 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
                 }
             }
 
-
             val properties by remember {
-                mutableStateOf(
-                    MapProperties(
-                        mapStyleOptions = MapStyleOptions(
-                            """
-            [
-              {
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#212121"
-                  }
-                ]
-              },
-              {
-                "elementType": "labels.icon",
-                "stylers": [
-                  {
-                    "visibility": "off"
-                  }
-                ]
-              },
-              {
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#757575"
-                  }
-                ]
-              },
-              {
-                "elementType": "labels.text.stroke",
-                "stylers": [
-                  {
-                    "color": "#212121"
-                  }
-                ]
-              },
-              {
-                "featureType": "administrative",
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#757575"
-                  }
-                ]
-              },
-              {
-                "featureType": "administrative.country",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#9e9e9e"
-                  }
-                ]
-              },
-              {
-                "featureType": "administrative.land_parcel",
-                "stylers": [
-                  {
-                    "visibility": "off"
-                  }
-                ]
-              },
-              {
-                "featureType": "administrative.locality",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#bdbdbd"
-                  }
-                ]
-              },
-              {
-                "featureType": "poi",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#757575"
-                  }
-                ]
-              },
-              {
-                "featureType": "poi.park",
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#181818"
-                  }
-                ]
-              },
-              {
-                "featureType": "poi.park",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#616161"
-                  }
-                ]
-              },
-              {
-                "featureType": "poi.park",
-                "elementType": "labels.text.stroke",
-                "stylers": [
-                  {
-                    "color": "#1b1b1b"
-                  }
-                ]
-              },
-              {
-                "featureType": "road",
-                "elementType": "geometry.fill",
-                "stylers": [
-                  {
-                    "color": "#2c2c2c"
-                  }
-                ]
-              },
-              {
-                "featureType": "road",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#8a8a8a"
-                  }
-                ]
-              },
-              {
-                "featureType": "road.arterial",
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#373737"
-                  }
-                ]
-              },
-              {
-                "featureType": "road.highway",
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#3c3c3c"
-                  }
-                ]
-              },
-              {
-                "featureType": "road.highway.controlled_access",
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#4e4e4e"
-                  }
-                ]
-              },
-              {
-                "featureType": "road.local",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#616161"
-                  }
-                ]
-              },
-              {
-                "featureType": "transit",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#757575"
-                  }
-                ]
-              },
-              {
-                "featureType": "water",
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#000000"
-                  }
-                ]
-              },
-              {
-                "featureType": "water",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#3d3d3d"
-                  }
-                ]
-              }
-            ]
-        """.trimIndent()
-                        )
-                    )
-                )
+                mutableStateOf(MapProperties(mapStyleOptions = getDarkMapStyle()))
             }
 
             // Mapa
@@ -521,7 +328,7 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
                 }
             }
             // mostra imagem tirada
-            if (capturedImageUri.path?.isNotEmpty() == true) {
+            if (capturedImageUri?.path?.isNotEmpty() == true) {
                 AsyncImage(
                     model = capturedImageUri,
                     contentDescription = "photo taked",
@@ -529,20 +336,22 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
                 )
             }
 
-            // Botao para tirar foto
+            // Controle de estado para upload
+            var isUploading by remember { mutableStateOf(false) }
+            var uploadedImageUrl by remember { mutableStateOf<String?>(null) }
+
             Button(
-                modifier = Modifier.fillMaxWidth().padding(10.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(10.dp),
                 onClick = {
-                    // chamar permissao para camera
                     if (!cameraPermissionState.status.isGranted) {
                         cameraPermissionState.launchPermissionRequest()
                     } else {
-                        // tira foto e guarda o URI
                         cameraLauncher.launch(uri)
                     }
                 },
                 colors = ButtonDefaults.buttonColors(
-
                     containerColor = Color(238, 31, 39, 200),
                     contentColor = Color.Black
                 )
@@ -553,15 +362,16 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
                     contentDescription = "Camera Icon",
                     modifier = Modifier.size(24.dp)
                 )
-
             }
 
-            // Botao para submeter formulario
+            // Botão "Report Place" para submissão
             Button(
-                modifier = Modifier.fillMaxWidth().height(80.dp).padding(10.dp).clip(RoundedCornerShape(8.dp)),
-
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp)
+                    .padding(10.dp)
+                    .clip(RoundedCornerShape(8.dp)),
                 onClick = {
-                    // Validar campos
                     if (textInput.isEmpty()) {
                         Toast.makeText(
                             context,
@@ -586,38 +396,65 @@ fun MapForm(navController: NavHostController, mapViewModel: MapViewModel) {
                     } else if (containsInvalidChars(textInput)) {
                         Toast.makeText(
                             context,
-                            "❌ name should not contain '.', '$', '#', '[' or ']' !",
+                            "❌ Name should not contain '.', '$', '#', '[' or ']'!",
                             Toast.LENGTH_SHORT
                         ).show()
                         return@Button
                     }
 
+                    if (capturedImageUri == null) {
+                        Toast.makeText(context, "❌ Please take a photo before submitting!", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
 
-                    val itemMarker = ItemMarker(
-                        textInput,
-                        selectedText,
-                        icon = when (selectedText) {
-                            "Safe Zone" -> R.drawable.safe_zone_icon.toString()
-                            "Infected Zone" -> R.drawable.infected_zone_icon.toString()
-                            "Supply Zone" -> R.drawable.supply_zone_icon.toString()
-                            else -> ""
+                    val base64Image = ImgBBApi.convertImageToBase64(context, capturedImageUri!!)
+                    if (base64Image == null) {
+                        Toast.makeText(context, "❌ Failed to convert image to Base64!", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+
+                    // Iniciar upload
+                    isUploading = true
+                    ImgBBApi.uploadImage(
+                        context = context,
+                        base64Image = base64Image,
+                        onSuccess = { imageUrl ->
+                            isUploading = false
+                            uploadedImageUrl = imageUrl
+
+                            // Criar o marcador e enviar para o Firebase
+                            val itemMarker = ItemMarker(
+                                textInput,
+                                selectedText,
+                                icon = uploadedImageUrl ?: "",
+                                markerPosition!!.latitude,
+                                markerPosition!!.longitude
+                            )
+                            mapViewModel.addMarker(itemMarker)
+                            Toast.makeText(context, "✅ Posted successfully!", Toast.LENGTH_LONG).show()
+                            navController.popBackStack()
                         },
-                        markerPosition!!.latitude,
-                        markerPosition!!.longitude
+                        onError = { error ->
+                            isUploading = false
+                            Toast.makeText(context, "❌ Error uploading image: $error", Toast.LENGTH_LONG).show()
+                        }
                     )
-                    mapViewModel.addMarker(itemMarker)
-                    Toast.makeText(context, "\uD83D\uDCDD Posted successfully !", Toast.LENGTH_LONG)
-                        .show()
-                    navController.popBackStack()
                 },
-                shape = RectangleShape,
+                enabled = !isUploading, // Desabilitar botão enquanto o upload está em andamento
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(238, 31, 39, 200),
-                    contentColor = Color.Black)
+                    containerColor = if (isUploading) Color.Gray else Color(238, 31, 39, 200),
+                    contentColor = Color.Black
+                )
             ) {
-                Text(text= "+ Report Place", fontWeight = FontWeight.Bold )
+                if (isUploading) {
+                    Text("Uploading...")
+                } else {
+                    Text("+ Report Place", fontWeight = FontWeight.Bold)
+                }
             }
-        }}
+        }
+
+        }
     }
 }
 

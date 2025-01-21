@@ -6,13 +6,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.location.Location
-import android.os.Looper
-import android.util.Log
-import android.widget.Button
-import android.widget.Toast
 import androidx.compose.animation.animateColor
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.infiniteRepeatable
@@ -24,7 +18,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -33,16 +26,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -75,15 +63,10 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MapStyleOptions
-import com.google.android.gms.tasks.CancellationToken
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.GoogleMap
@@ -104,9 +87,16 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import androidx.compose.foundation.border
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import coil3.compose.AsyncImage
+import coil3.request.CachePolicy
+import coil3.request.ImageRequest
+import com.example.projeto_cm_24_25.utils.getDarkMapStyle
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.maps.android.compose.MarkerInfoWindow
 
 fun resizeIcon(resourceId: Int, context: Context, width: Int, height: Int): BitmapDescriptor {
     val bitmap = BitmapFactory.decodeResource(context.resources, resourceId)
@@ -166,7 +156,6 @@ fun rememberDeviceOrientation(): Float {
 
 private lateinit var fusedLocationClient: FusedLocationProviderClient
 
-
 @SuppressLint("RememberReturnType")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
@@ -199,12 +188,16 @@ fun MapScreen(
     val dataStore = DataStoreRepository(location)
     val userName = dataStore.getUserName.collectAsState(initial = "").value
 
-    LaunchedEffect(true) {
-        // Permissao para aceder a localizacao atual
-        locationPermissionState.launchMultiplePermissionRequest()
-        // inicializar a busca dos dados dos markers
-        mapViewModel.getMarkers()
-        mapViewModel.getAlerts()
+    LaunchedEffect(Unit) {
+        // Verificar se as permissões já estão concedidas
+        if (locationPermissionState.allPermissionsGranted) {
+            // Inicializar a busca dos dados dos markers e alertas
+            mapViewModel.getMarkers()
+            mapViewModel.getAlerts()
+        } else {
+            // Pedir permissões se ainda não estiverem concedidas
+            locationPermissionState.launchMultiplePermissionRequest()
+        }
     }
 
     DisposableEffect(Unit){
@@ -234,7 +227,9 @@ fun MapScreen(
             ).addOnSuccessListener { location ->
                 location?.let {
                     //Log.d("ACT", location.toString())
-                    currentLocation.position = LatLng(location.latitude, location.longitude)
+                    if (currentLocation.position != LatLng(location.latitude, location.longitude)) {
+                        currentLocation.position = LatLng(location.latitude, location.longitude)
+                    }
                     // Guardar a posicao no firebase
                     if (userName != null) {
                         if(userName.isNotEmpty()) {
@@ -262,194 +257,7 @@ fun MapScreen(
     }
 
     val properties by remember {
-        mutableStateOf(MapProperties(mapStyleOptions = MapStyleOptions("""
-            [
-              {
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#212121"
-                  }
-                ]
-              },
-              {
-                "elementType": "labels.icon",
-                "stylers": [
-                  {
-                    "visibility": "off"
-                  }
-                ]
-              },
-              {
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#757575"
-                  }
-                ]
-              },
-              {
-                "elementType": "labels.text.stroke",
-                "stylers": [
-                  {
-                    "color": "#212121"
-                  }
-                ]
-              },
-              {
-                "featureType": "administrative",
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#757575"
-                  }
-                ]
-              },
-              {
-                "featureType": "administrative.country",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#9e9e9e"
-                  }
-                ]
-              },
-              {
-                "featureType": "administrative.land_parcel",
-                "stylers": [
-                  {
-                    "visibility": "off"
-                  }
-                ]
-              },
-              {
-                "featureType": "administrative.locality",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#bdbdbd"
-                  }
-                ]
-              },
-              {
-                "featureType": "poi",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#757575"
-                  }
-                ]
-              },
-              {
-                "featureType": "poi.park",
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#181818"
-                  }
-                ]
-              },
-              {
-                "featureType": "poi.park",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#616161"
-                  }
-                ]
-              },
-              {
-                "featureType": "poi.park",
-                "elementType": "labels.text.stroke",
-                "stylers": [
-                  {
-                    "color": "#1b1b1b"
-                  }
-                ]
-              },
-              {
-                "featureType": "road",
-                "elementType": "geometry.fill",
-                "stylers": [
-                  {
-                    "color": "#2c2c2c"
-                  }
-                ]
-              },
-              {
-                "featureType": "road",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#8a8a8a"
-                  }
-                ]
-              },
-              {
-                "featureType": "road.arterial",
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#373737"
-                  }
-                ]
-              },
-              {
-                "featureType": "road.highway",
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#3c3c3c"
-                  }
-                ]
-              },
-              {
-                "featureType": "road.highway.controlled_access",
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#4e4e4e"
-                  }
-                ]
-              },
-              {
-                "featureType": "road.local",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#616161"
-                  }
-                ]
-              },
-              {
-                "featureType": "transit",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#757575"
-                  }
-                ]
-              },
-              {
-                "featureType": "water",
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#000000"
-                  }
-                ]
-              },
-              {
-                "featureType": "water",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#3d3d3d"
-                  }
-                ]
-              }
-            ]
-        """.trimIndent())))
+        mutableStateOf(MapProperties(mapStyleOptions = getDarkMapStyle()))
     }
 
     // Definir animacoes nas cores
@@ -459,7 +267,7 @@ fun MapScreen(
         initialValue = Color(0xB9C01616),
         targetValue = Color(0x9FF6F2F2),
         animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = LinearEasing),
+            animation = tween(5000, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "color"
@@ -520,111 +328,98 @@ fun MapScreen(
             )
         }
 
-        Box{
-
+        Box {
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState,
                 uiSettings = MapUiSettings(zoomControlsEnabled = true),
                 properties = properties
             ) {
-
-                // Marker para posicao atual
+                // Marcador para a posição atual
                 Marker(
                     state = currentLocation,
                     title = "Você está aqui",
-                    icon = resizeIcon(R.drawable.user_location, location, 64, 64), // Use um ícone com seta para direção
+                    icon = resizeIcon(
+                        R.drawable.user_location,
+                        location,
+                        64,
+                        64
+                    ),
                     rotation = (azimuth + 180) % 360, // Inverte o sentido
                     anchor = Offset(0.5f, 0.5f)
                 )
 
-                userAlertList.value.forEach {
-                    // se utilizador nao estiver seguro emite notificacao
-                    if(it.safe.equals("false")) {
-                        if(showUserNotification.value) {
-                            notificationService.showNotification(
-                                "⚠\uFE0F Alert ⚠\uFE0F",
-                                "${it.username} is in danger. Help!"
-                            )
-                            mapViewModel.disableUserNotification()
-                        }
+                // Notificações para utilizadores em perigo
+                userAlertList.value.forEach { alert ->
+                    if (alert.safe == "false" && showUserNotification.value) {
+                        notificationService.showNotification(
+                            "⚠\uFE0F Alert ⚠\uFE0F",
+                            "${alert.username} is in danger. Help!"
+                        )
+                        mapViewModel.disableUserNotification()
                     }
                 }
 
-                // Mostra os markers com os pontos registados e a localizacao dos utilizadores
-                markerList.value.filter { it.name != userName }.forEach {
-                    val distance : Double = haversineDistance(
+                markerList.value.filter { it.name != userName }.forEach { marker ->
+                    val distance = haversineDistance(
                         currentLocation.position.latitude,
                         currentLocation.position.longitude,
-                        it.latitude,
-                        it.longitude
+                        marker.latitude,
+                        marker.longitude
                     )
 
-                    // Alerta utilizador para proximidade de zona perigosa
-                    if (distance < 5 && it.type == "Infected Zone") {
-                        if(showAlert.value) {
-                            notificationService.showNotification(
-                                "⚠\uFE0F Alert ⚠\uFE0F",
-                                "You are near a zombie area. Go away \uD83D\uDE0E"
+                    // Renderizar o marcador no mapa com um ícone personalizado e InfoWindow
+                    MarkerInfoWindow(
+                        state = MarkerState(position = LatLng(marker.latitude, marker.longitude)),
+                        icon = BitmapDescriptorFactory.fromBitmap(
+                            Bitmap.createScaledBitmap(
+                                BitmapFactory.decodeResource(
+                                    LocalContext.current.resources,
+                                    getMarkerIcon(marker.type) // Retorna o ícone correto com base no tipo
+                                ),
+                                64, // Largura do ícone ajustada
+                                64, // Altura do ícone ajustada
+                                false
                             )
-                            showAlert.value = !showAlert.value
-                        }
-                    }
-
-                    // Se a area for infetada mostra o circulo
-                    if(it.type == "Infected Zone") {
-                        Circle(
-                            center = LatLng(it.latitude, it.longitude),
-                            radius = 70.0,
-                            strokeColor = primaryColor,
-                            fillColor = colorInfected,
-                            strokeWidth = 2f
-                        )
-                    } else {
-                        Circle(
-                            center = LatLng(it.latitude, it.longitude),
-                            radius = 50.0,
-                            strokeColor = primaryColor,
-                            fillColor = colorSafe,
-                            strokeWidth = 2f
-                        )
-                    }
-                    MarkerComposable(
-                        state = MarkerState(position = LatLng(it.latitude, it.longitude)),
-                        title = it.name,
-                        snippet = "${it.type} at ${ceil(distance)} km",
-                        onClick = {
-                            cameraPositionState.position = CameraPosition.fromLatLngZoom(it.position, 17f)
-                            false
-                        }
-                    ){
-                        when(it.type) {
-                            "Safe Zone" -> {
-                                Image(
-                                    painter = painterResource(R.drawable.safe_zone_icon2),
-                                    contentDescription = "image on marker",
-                                    modifier = Modifier.size(40.dp)
-                                )
-                            }
-                            "Infected Zone" -> {
-                                Image(
-                                    painter = painterResource(R.drawable.infected_zone_icon2),
-                                    contentDescription = "image on marker",
-                                    modifier = Modifier.size(40.dp)
-                                )
-                            }
-                            "Supply Zone" -> {
-                                Image(
-                                    painter = painterResource(R.drawable.supply_zone_icon2),
-                                    contentDescription = "image on marker",
-                                    modifier = Modifier.size(40.dp)
-                                )
-                            }
-                            else -> {
-                                Image(
-                                    painter = painterResource(R.drawable.user_zone_icon2),
-                                    contentDescription = "image on marker",
-                                    modifier = Modifier.size(40.dp)
+                        ),
+                        title = marker.name,
+                        snippet = "Type: ${marker.type}\nCoordinates: (${marker.latitude}, ${marker.longitude})"
+                    ) {
+                        // Personaliza a InfoWindow com informações detalhadas
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier
+                                .border(1.dp, Color.Black)
+                                .clip(RectangleShape)
+                                .background(Color.White)
+                                .padding(10.dp)
+                        ) {
+                            Text(
+                                text = marker.name,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = Color.Black
+                            )
+                            Text(
+                                text = "Type: ${marker.type}",
+                                fontSize = 14.sp,
+                                color = Color.Black
+                            )
+                            Text(
+                                text = "Coordinates: (${marker.latitude}, ${marker.longitude})",
+                                fontSize = 12.sp,
+                                color = Color.Gray
+                            )
+                            Box(modifier = Modifier.size(100.dp)) {
+                                AsyncImage(
+                                    model = ImageRequest.Builder(LocalContext.current)
+                                        .data(marker.icon) // URL ou recurso da imagem associada ao marcador
+                                        .diskCachePolicy(CachePolicy.DISABLED)
+                                        .memoryCachePolicy(CachePolicy.DISABLED)
+                                        .build(),
+                                    contentDescription = "Marker Image",
+                                    modifier = Modifier.size(100.dp)
                                 )
                             }
                         }
@@ -632,19 +427,21 @@ fun MapScreen(
                 }
             }
 
+            // Botão flutuante superior (perfil do usuário)
             ExtendedFloatingActionButton(
                 onClick = { },
-                modifier = Modifier.size(100.dp).align(Alignment.TopEnd).padding(20.dp) ,
+                modifier = Modifier.size(100.dp).align(Alignment.TopEnd).padding(20.dp),
                 containerColor = Color(238, 31, 39)
-
             ) {
-                Text(text = userName?.firstOrNull()?.uppercase()?.toString() ?: "?",
-                    fontSize = 20.sp)
+                Text(
+                    text = userName?.firstOrNull()?.uppercase()?.toString() ?: "?",
+                    fontSize = 20.sp
+                )
             }
 
+            // Botão flutuante inferior para reportar lugar
             ExtendedFloatingActionButton(
                 onClick = {
-                    // Navegar para o ecra do formulario do mapa
                     navController.navigate(Screen.MapForm.route)
                 },
                 containerColor = Color(238, 31, 39, 200),
@@ -659,13 +456,11 @@ fun MapScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-
                     Image(
                         painter = painterResource(R.drawable.bio_hazzard),
                         contentDescription = "Left image",
                         modifier = Modifier.size(20.dp)
                     )
-
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center,
@@ -677,7 +472,6 @@ fun MapScreen(
                             fontWeight = FontWeight.Bold
                         )
                     }
-
                     Image(
                         painter = painterResource(R.drawable.bio_hazzard),
                         contentDescription = "Right image",
@@ -685,7 +479,6 @@ fun MapScreen(
                     )
                 }
             }
-
         }
     }
 }
@@ -711,4 +504,13 @@ fun haversineDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): D
     // Distance in kilometers
     val distance = R * c
     return distance
+}
+
+fun getMarkerIcon(type: String): Int {
+    return when (type) {
+        "Safe Zone" -> R.drawable.safe_zone_icon2
+        "Infected Zone" -> R.drawable.infected_zone_icon2
+        "Supply Zone" -> R.drawable.supply_zone_icon2
+        else -> R.drawable.user_zone_icon2
+    }
 }
