@@ -20,7 +20,7 @@ class MapRepository {
     private val itemsRef = database.getReference("map")
 
     suspend fun fetchMapData() : List<ItemMarker> {
-        delay(3000)
+        delay(400)
         return try {
             val snapshot = itemsRef.get().await()
             val itemList = mutableListOf<ItemMarker>()

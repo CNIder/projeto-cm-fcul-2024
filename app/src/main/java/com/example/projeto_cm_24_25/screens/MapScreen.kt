@@ -14,7 +14,6 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -39,7 +38,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -87,16 +85,30 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.material3.Card
+import androidx.compose.runtime.key
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import coil3.compose.AsyncImage
-import coil3.request.CachePolicy
-import coil3.request.ImageRequest
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.Popup
+import androidx.core.text.isDigitsOnly
+import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
+import coil.size.Size
+import com.example.projeto_cm_24_25.screens.getMarkerIcon
+
 import com.example.projeto_cm_24_25.utils.getDarkMapStyle
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.maps.android.compose.MarkerInfoWindow
+import com.google.maps.android.compose.MarkerInfoWindowContent
 
 fun resizeIcon(resourceId: Int, context: Context, width: Int, height: Int): BitmapDescriptor {
     val bitmap = BitmapFactory.decodeResource(context.resources, resourceId)
@@ -182,6 +194,7 @@ fun MapScreen(
     val sensorViewModel = remember { AccerelometerViewModel(location) }
     val showDialog = remember { mutableStateOf(false) }
     val showAlert = remember { mutableStateOf(true) }
+
     val showUserNotification = mapViewModel.showAlertNotification.observeAsState(true)
     val insertUserPosition = remember { mutableStateOf(true) }
 
@@ -243,7 +256,7 @@ fun MapScreen(
                                     ItemMarker(
                                         name = userName,
                                         type = "User",
-                                        icon = R.drawable.user_zone_icon2.toString(),
+                                        icon = "",
                                         latitude = location.latitude,
                                         longitude = location.longitude
                                     )
@@ -292,7 +305,7 @@ fun MapScreen(
         if(sensorViewModel.acceleration.value > 30f) {
             showDialog.value = true
         }
-
+        
         // Se o valor x do accerolometro for elevado,
         // foi detetado movimento brusco com o telemovel
         if(showDialog.value) {
@@ -335,6 +348,17 @@ fun MapScreen(
                 uiSettings = MapUiSettings(zoomControlsEnabled = true),
                 properties = properties
             ) {
+                markerList.value.filter { it.name != userName }.forEach { marker ->
+                    val distance = haversineDistance(
+                        currentLocation.position.latitude,
+                        currentLocation.position.longitude,
+                        marker.latitude,
+                        marker.longitude
+                    )
+
+                    customMarker(marker)
+                }
+
                 // Marcador para a posição atual
                 Marker(
                     state = currentLocation,
@@ -342,8 +366,8 @@ fun MapScreen(
                     icon = resizeIcon(
                         R.drawable.user_location,
                         location,
-                        64,
-                        64
+                        90,
+                        90
                     ),
                     rotation = (azimuth + 180) % 360, // Inverte o sentido
                     anchor = Offset(0.5f, 0.5f)
@@ -357,72 +381,6 @@ fun MapScreen(
                             "${alert.username} is in danger. Help!"
                         )
                         mapViewModel.disableUserNotification()
-                    }
-                }
-
-                markerList.value.filter { it.name != userName }.forEach { marker ->
-                    val distance = haversineDistance(
-                        currentLocation.position.latitude,
-                        currentLocation.position.longitude,
-                        marker.latitude,
-                        marker.longitude
-                    )
-
-                    // Renderizar o marcador no mapa com um ícone personalizado e InfoWindow
-                    MarkerInfoWindow(
-                        state = MarkerState(position = LatLng(marker.latitude, marker.longitude)),
-                        icon = BitmapDescriptorFactory.fromBitmap(
-                            Bitmap.createScaledBitmap(
-                                BitmapFactory.decodeResource(
-                                    LocalContext.current.resources,
-                                    getMarkerIcon(marker.type) // Retorna o ícone correto com base no tipo
-                                ),
-                                64, // Largura do ícone ajustada
-                                64, // Altura do ícone ajustada
-                                false
-                            )
-                        ),
-                        title = marker.name,
-                        snippet = "Type: ${marker.type}\nCoordinates: (${marker.latitude}, ${marker.longitude})"
-                    ) {
-                        // Personaliza a InfoWindow com informações detalhadas
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                            modifier = Modifier
-                                .border(1.dp, Color.Black)
-                                .clip(RectangleShape)
-                                .background(Color.White)
-                                .padding(10.dp)
-                        ) {
-                            Text(
-                                text = marker.name,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp,
-                                color = Color.Black
-                            )
-                            Text(
-                                text = "Type: ${marker.type}",
-                                fontSize = 14.sp,
-                                color = Color.Black
-                            )
-                            Text(
-                                text = "Coordinates: (${marker.latitude}, ${marker.longitude})",
-                                fontSize = 12.sp,
-                                color = Color.Gray
-                            )
-                            Box(modifier = Modifier.size(100.dp)) {
-                                AsyncImage(
-                                    model = ImageRequest.Builder(LocalContext.current)
-                                        .data(marker.icon) // URL ou recurso da imagem associada ao marcador
-                                        .diskCachePolicy(CachePolicy.DISABLED)
-                                        .memoryCachePolicy(CachePolicy.DISABLED)
-                                        .build(),
-                                    contentDescription = "Marker Image",
-                                    modifier = Modifier.size(100.dp)
-                                )
-                            }
-                        }
                     }
                 }
             }
@@ -504,6 +462,101 @@ fun haversineDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): D
     // Distance in kilometers
     val distance = R * c
     return distance
+}
+
+@Composable
+fun customMarker(marker: ItemMarker) {
+    val painter = rememberAsyncImagePainter(
+        ImageRequest.Builder(LocalContext.current)
+            .data(marker.icon)
+            .allowHardware(false)
+            .build()
+    )
+    var expandMarker = remember {
+        mutableStateOf(false)
+    }
+
+    if(expandMarker.value) {
+        Dialog(
+            onDismissRequest = {expandMarker.value = false},
+            content = {
+                Column(
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ){
+                    Card {
+                        Text("ZONE TYPE : ${marker.type}")
+                        if(marker.type != "User" && !marker.icon.isEmpty()) {
+                            Image(
+                                painter,
+                                contentDescription = null,
+                                modifier = Modifier.size(150.dp, 150.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        )
+    }
+
+    MarkerComposable(
+        keys = arrayOf(marker, painter.state, expandMarker),
+        state = MarkerState(position = LatLng(marker.latitude, marker.longitude)),
+        title = marker.name,
+        snippet = marker.type,
+        anchor = Offset(0.5f, 1f),
+        onClick = {
+            expandMarker.value = true
+            false
+        }
+    ) {
+        Image(
+            painter = painterResource(getMarkerIcon(marker.type)),
+            contentDescription = "",
+            modifier = Modifier.size(50.dp, 50.dp)
+        )
+    }
+    /*
+    if(marker.type == "User") {
+        MarkerInfoWindowContent(
+            state = MarkerState(position = LatLng(marker.latitude, marker.longitude)),
+            icon = BitmapDescriptorFactory.fromBitmap(
+                Bitmap.createScaledBitmap(
+                    BitmapFactory.decodeResource(
+                        LocalContext.current.resources,
+                        getMarkerIcon(marker.type) // Retorna o ícone correto com base no tipo
+                    ),
+                    90, // Largura do ícone ajustada
+                    90, // Altura do ícone ajustada
+                    false
+                )
+            ),
+            content = {
+                    Text("Teste")
+                    Image(painter, contentDescription = null)
+            },
+            snippet = "Type: ${marker.type}\nCoordinates: (${marker.latitude}, ${marker.longitude})"
+        )
+    } else {
+        MarkerComposable(
+            keys = arrayOf(marker, painter.state),
+            state = MarkerState(position = LatLng(marker.latitude, marker.longitude)),
+            title = marker.name,
+            onClick = {
+                expandMarker.value = !expandMarker.value
+                true
+            },
+            content = {
+                if(marker.icon.isNullOrEmpty()) {
+                    Image(
+                        painter = painterResource(getMarkerIcon(marker.type)),
+                        contentDescription = "Profile Image",
+                        Modifier.size(150.dp, 150.dp)
+                    )
+                }
+            }
+        )
+    }*/
 }
 
 fun getMarkerIcon(type: String): Int {

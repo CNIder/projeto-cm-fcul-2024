@@ -74,7 +74,6 @@ import androidx.compose.ui.zIndex
 import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
 import androidx.viewbinding.BuildConfig
-import coil3.compose.AsyncImage
 import com.example.projeto_cm_24_25.R
 import com.example.projeto_cm_24_25.data.MapViewModel
 import com.example.projeto_cm_24_25.data.model.ItemMarker
@@ -103,6 +102,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import coil.compose.AsyncImage
 import com.example.projeto_cm_24_25.utils.getDarkMapStyle
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
