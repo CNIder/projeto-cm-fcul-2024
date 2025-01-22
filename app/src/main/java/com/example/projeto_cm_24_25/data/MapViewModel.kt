@@ -1,21 +1,13 @@
 package com.example.projeto_cm_24_25.data
 
-import android.widget.Toast
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projeto_cm_24_25.data.model.AlertData
-import com.example.projeto_cm_24_25.data.model.Blog
 import com.example.projeto_cm_24_25.data.model.ItemMarker
 import com.example.projeto_cm_24_25.data.repository.AlertRepository
 import com.example.projeto_cm_24_25.data.repository.MapRepository
-import com.google.firebase.database.ChildEventListener
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.ValueEventListener
 import kotlinx.coroutines.launch
 
 class MapViewModel: ViewModel() {

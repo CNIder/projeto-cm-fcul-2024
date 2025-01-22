@@ -1,8 +1,6 @@
 package com.example.projeto_cm_24_25.data.repository
 
-import android.util.Log
 import com.example.projeto_cm_24_25.data.model.AlertData
-import com.example.projeto_cm_24_25.data.model.ItemMarker
 import com.google.firebase.Firebase
 import com.google.firebase.database.database
 import kotlinx.coroutines.delay

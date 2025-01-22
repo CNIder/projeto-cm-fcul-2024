@@ -10,6 +10,7 @@
     <uses-feature android:name="android.hardware.camera.any"/>
 
     <application
+        android:usesCleartextTraffic="true"
         android:name=".utils.NotificationApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
