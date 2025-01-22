@@ -89,6 +89,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
@@ -305,7 +306,7 @@ fun MapScreen(
         if(sensorViewModel.acceleration.value > 30f) {
             showDialog.value = true
         }
-        
+
         // Se o valor x do accerolometro for elevado,
         // foi detetado movimento brusco com o telemovel
         if(showDialog.value) {
@@ -484,16 +485,39 @@ fun customMarker(marker: ItemMarker) {
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ){
-                    Card {
-                        Text("ZONE TYPE : ${marker.type}")
-                        if(marker.type != "User" && !marker.icon.isEmpty()) {
-                            Image(
-                                painter,
-                                contentDescription = null,
-                                modifier = Modifier.size(150.dp, 150.dp)
-                            )
+                    Box(
+                        modifier = Modifier
+                            .background(Color(25,25,25,180), shape = RoundedCornerShape(16.dp))  // Cor de fundo e cantos arredondados
+                            .padding(16.dp)
+
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            // Coluna com os textos alinhados à esquerda
+                            Column(
+                             ) {
+                                Text(text = "${marker.type}", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(238, 31, 39))
+                                Text(text = "${marker.name}", fontSize = 15.sp)
+                                Text(text = "Position:" , fontWeight = FontWeight.Bold, fontSize = 15.sp   )
+                                Text(text = "Lat: ${convertToDMS(marker.latitude)}", fontSize = 12.sp)  // Converter latitude
+                                Text(text = "Lng: ${convertToDMS(marker.longitude)}", fontSize = 12.sp)  // Longitude norma
+                            }
+
+                            // Exibir imagem à direita se a condição for atendida
+                            if (marker.type != "User" && marker.icon.isNotEmpty()) {
+                                Image(
+                                    painter = rememberAsyncImagePainter(marker.icon),
+                                    contentDescription = "Marker Image",
+                                    modifier = Modifier
+                                        .size(150.dp)
+                                        .clip(RoundedCornerShape(12.dp))  // Imagem com cantos arredondados
+                                )
+                            }
                         }
                     }
+
                 }
             }
         )
@@ -516,48 +540,7 @@ fun customMarker(marker: ItemMarker) {
             modifier = Modifier.size(50.dp, 50.dp)
         )
     }
-    /*
-    if(marker.type == "User") {
-        MarkerInfoWindowContent(
-            state = MarkerState(position = LatLng(marker.latitude, marker.longitude)),
-            icon = BitmapDescriptorFactory.fromBitmap(
-                Bitmap.createScaledBitmap(
-                    BitmapFactory.decodeResource(
-                        LocalContext.current.resources,
-                        getMarkerIcon(marker.type) // Retorna o ícone correto com base no tipo
-                    ),
-                    90, // Largura do ícone ajustada
-                    90, // Altura do ícone ajustada
-                    false
-                )
-            ),
-            content = {
-                    Text("Teste")
-                    Image(painter, contentDescription = null)
-            },
-            snippet = "Type: ${marker.type}\nCoordinates: (${marker.latitude}, ${marker.longitude})"
-        )
-    } else {
-        MarkerComposable(
-            keys = arrayOf(marker, painter.state),
-            state = MarkerState(position = LatLng(marker.latitude, marker.longitude)),
-            title = marker.name,
-            onClick = {
-                expandMarker.value = !expandMarker.value
-                true
-            },
-            content = {
-                if(marker.icon.isNullOrEmpty()) {
-                    Image(
-                        painter = painterResource(getMarkerIcon(marker.type)),
-                        contentDescription = "Profile Image",
-                        Modifier.size(150.dp, 150.dp)
-                    )
-                }
-            }
-        )
-    }*/
-}
+    }
 
 fun getMarkerIcon(type: String): Int {
     return when (type) {
@@ -566,4 +549,12 @@ fun getMarkerIcon(type: String): Int {
         "Supply Zone" -> R.drawable.supply_zone_icon2
         else -> R.drawable.user_zone_icon2
     }
+}
+
+fun convertToDMS(coordinate: Double): String {
+    val degrees = coordinate.toInt()
+    val minutesDecimal = (coordinate - degrees) * 60
+    val minutes = minutesDecimal.toInt()
+    val secondsDecimal = (minutesDecimal - minutes) * 60
+    return String.format("%dº %d' %.1f''", degrees, minutes, secondsDecimal)
 }

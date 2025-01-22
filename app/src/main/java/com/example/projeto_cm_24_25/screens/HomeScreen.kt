@@ -25,6 +25,7 @@ import androidx.navigation.NavHostController
 import com.example.projeto_cm_24_25.data.MapViewModel
 import com.example.projeto_cm_24_25.data.BlogViewModel
 import com.example.projeto_cm_24_25.navigation.NavigationItem
+import com.example.projeto_cm_24_25.ui.theme.primaryColor
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -55,7 +56,7 @@ fun HomeScreen(navController: NavHostController) {
                         },
                         colors = NavigationBarItemColors(
 
-                            selectedIconColor = Color.White,
+                            selectedIconColor = primaryColor,
                             selectedTextColor = Color.White,
                             selectedIndicatorColor = Color.Transparent,
                             disabledIconColor = Color.Unspecified,
